@@ -3,16 +3,14 @@
 🗃 Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.
 
 
-# Installation
+## Installation
 
 ```js
 npm install rage-edit
 ```
 
-# API
 
-
-## Keep in mind
+## Keep in mind before using
 
 
 ### Structure and naming (keys & values) in Windows Registry
@@ -50,7 +48,9 @@ await Registry.get('hkcr\\.exe', 'content type') // returns the data
 ```
 [See *Case sensitivity* section for more](#case-sensitivity)
 
-## `Registry` class
+## API
+
+### `Registry` class
 
 Only the `Registry` class is exported (both named and default export)
 
@@ -64,7 +64,7 @@ var {Registry} = require('rage-edit')
 
 It is modeled after ES6 `Map` class with methods like `.get()`, `.set()`, `.delete()` and few others. Those can be used in two modes - static and instance.
 
-### Static mode
+#### Static mode
 
 ```js
 // Creates Overwatch key inside HKLM\SOFTWARE if it doesn't exist yet.
@@ -81,7 +81,7 @@ await Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', 'Leader', 'Gabriel R
 await Registry.get('hklm\\software\\overwatch\\blackwatch', 'leader')
 ``` 
 
-### Instance mode
+#### Instance mode
 
 ```js
 // Creates the instance but does not yet create the Overwatch key if it doesn't exists yet.
