@@ -583,7 +583,7 @@ HKEY_CLASSES_ROOT\.jpg
 
 This however could cause performance issues (querying whole key when only single value is needed isn't a good idea) and the insensitive nature of Windows Registry lead `rage-edit` to deliberately lowercase all paths and value names to prevent situations like this:
 
-``` js
+```js
 // rage-edit by default transforms all value names to lower case to prevent having to do this:
 var key = await Registry.get('HKLM\\SOFTWARE\\MyApp')
 var version = key.$values['VERSION'] || key.$values['Version'] || key.$values['version']
@@ -593,7 +593,7 @@ var version = key.$values['VERSION'] || key.$values['Version'] || key.$values['v
 
 `rage-edit` automatically picks a registry value type for you, based in the data you're storing, if you don't specify the type for yourself.
 
-```
+```js
 Registry.setValue('HKLM\\Some\\Path', 'name', 'string', 'REG_SZ')
 Registry.setValue('HKLM\\Some\\Path', 'name', 'string')
 
