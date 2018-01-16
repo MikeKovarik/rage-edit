@@ -116,11 +116,11 @@ Retrieves key from `path` or content of the `name`d value entry at the path.
 #### Example
 ```js
 // Retrieves key 'HKLM\Software\Overwatch'.
-reg.get('HKLM\\Software\\Overwatch')
+Registry.get('HKLM\\Software\\Overwatch')
 // Retrieves default value from 'HKLM\Software\Overwatch'.
-reg.get('HKLM\\Software\\Overwatch', '')
+Registry.get('HKLM\\Software\\Overwatch', '')
 // Retrieves value 'Scientists' from 'HKLM\Software\Overwatch'.
-reg.get('HKLM\\Software\\Overwatch', 'Scientists')
+Registry.get('HKLM\\Software\\Overwatch', 'Scientists')
 ```
 
 
