@@ -1,0 +1,24 @@
+{
+  "name": "rage-edit",
+  "version": "1.0.0",
+  "description": "Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.",
+  "keywords": ["windows", "registry", "regedit", "winreg"],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "mocha test"
+  },
+  "author": "Mike Kovařík",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MikeKovarik/rage-edit.git"
+  },
+  "dev-dependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1"
+  },
+  "dependencies": {
+    "rollup": "^0.51.7"
+  }
+}
