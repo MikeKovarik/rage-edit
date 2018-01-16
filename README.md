@@ -48,9 +48,9 @@ await Registry.get('hkcr\\.exe', 'content type') // returns the data
 ```
 [See *Case sensitivity* section for more](#case-sensitivity)
 
-## API
+# API
 
-### `Registry` class
+## `Registry` class
 
 Only the `Registry` class is exported (both named and default export)
 
@@ -64,7 +64,7 @@ var {Registry} = require('rage-edit')
 
 It is modeled after ES6 `Map` class with methods like `.get()`, `.set()`, `.delete()` and few others. Those can be used in two modes - static and instance.
 
-#### Static mode
+### Static mode
 
 ```js
 // Creates Overwatch key inside HKLM\SOFTWARE if it doesn't exist yet.
@@ -81,7 +81,7 @@ await Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', 'Leader', 'Gabriel R
 await Registry.get('hklm\\software\\overwatch\\blackwatch', 'leader')
 ``` 
 
-#### Instance mode
+### Instance mode
 
 ```js
 // Creates the instance but does not yet create the Overwatch key if it doesn't exists yet.
@@ -126,7 +126,7 @@ Registry.get('HKLM\\Software\\Overwatch', 'Scientists')
 
 ### `.has(path, [name])`
 
-Just like `.get()` but returns boolean depending on existence of the key or path.
+Just like `.get()` but returns boolean depending on existence of the key or value.
 
 #### Returns:
 `Promise<bool>`
@@ -201,13 +201,14 @@ Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', '', 'Mysterious branch of 
 ## Static properties
 
 
-### `DEFAULT = ''`
+**`DEFAULT = ''`** String used to represent name of default value.
 
-String used to represent name of default value.
+**`VALUES = '$values'`** String used for naming values key in [simple mode](#simple)
 
-### `VALUES = '$values'`
 
-String used for naming values key in [simple mode](#simple)
+
+
+
 
 ## Constructor, instance mode
 
@@ -218,8 +219,6 @@ var reg = new Registry('HKLM\\Software\\Overwatch')
 reg.get('Scientists')
 reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
 ```
-
-
 
 
 
@@ -259,9 +258,9 @@ reg.get('\\Blackwatch', 'Leader')
 
 
 
-### `.has([subpath][, name])`
+### `#has([subpath][, name])`
 
-Just like `.get()` but returns boolean depending on existence of the sub/key or path.
+Just like `.get()` but returns boolean depending on existence of the sub/key or value.
 
 #### Returns:
 `Promise<bool>`
@@ -322,19 +321,15 @@ reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
 
 ## Instance properties
 
-### `path`
+**`path`** Full path of current key path.
 
-Full path of current key path.
-
-### `hive`
-
-Short name of the current hive like `HKCU`.
+**`hive`** Short name of the current hive like `HKCU`.
 
 
 
 
 
-### Output format
+## Output format
 
 Retrieving data from the registry poses a complication. Format of the output cannot be as straight forward as JSON nested structure because registry better resembles XML tree where each node can have both a children nodes and also attributes. Windows registry key can host sub keys as well as value entries, both of which can have the same names leading to possible collision.
 
@@ -350,7 +345,7 @@ Registry.get('HKCR\\Directory\\shell', {format: 'complex'}
 ```
 
 
-#### Simple
+### Simple
 
 Simple output tries to resemble JSON at much as possible while trying to avoid collisions of names of keys and values.
 
@@ -385,7 +380,7 @@ var software = await Registry.get('HKLM\\software', true)
 software.microsoft.windows.currentversion['Lock Screen'].feedmanager.$values['']
 ```
 
-#### Complex
+### Complex
 
 Offers comprehensive output and first and foremost contains types of value entries since every value entry is represented by `{name, data, type}` object in a `values` array.
 
@@ -430,7 +425,7 @@ software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].key
 
 
 
-## Caveats, edge cases & the weirdness of windows registry
+# Caveats, edge cases & the weirdness of windows registry
 
 Windows registry has its fair share of footguns that you should be aware of. Not to mention the danger of damaging keys and value that are critical for proper operation of the OS.
 
