@@ -425,9 +425,9 @@ software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].key
 
 
 
-# Caveats, edge cases & the weirdness of windows registry
+# Caveats, edge cases & the weirdness of Sindows registry
 
-Windows registry has its fair share of footguns that you should be aware of. Not to mention the danger of damaging keys and value that are critical for proper operation of the OS.
+Windows registry has its fair share of footguns that you should be aware of. Not to mention the danger of damaging keys and values that are critical for proper operation of the OS.
 
 ### Friendly reminder about HKCR, HKLM, 64b and Wow6432Nodes
 
