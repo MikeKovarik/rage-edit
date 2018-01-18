@@ -13,22 +13,22 @@ npm install rage-edit
 ## Keep in mind before using
 
 
-### Structure and naming (keys & values) in Windows Registry
+### Structure and naming (keys & values) in the Windows Registry
 
-Please be advised that `key` and `value` terminology from Windows registry might be confusing because it's different than naming widely used in JS world. Windows registry is much like file system with folder and files, or XML, rather than JSON.
+Please be advised that the `key` and `value` terminology from the Windows registry might be confusing because it's different than the naming widely used in the world of JS. Windows registry is much like file system with folders and files, or XML, rather than JSON.
 
 In JSON, `key` usually stands for name of the property that stores a `value`.
 
-In Windows registry, `key` is like a folder (or the path to it) that can contain multiple `value`s, which are kind of like files. `value` has a name and the data content it stores (and type of the data).
+In the Windows registry, `key` is like a folder (or the path to it) that can contain multiple `value`s, which are kind of like files. `value` has a name and the data content it stores (and type of the data).
 
-So when reffering to `value`, its name is often meant rather than the data it holds.
+So when refering to `value`, its name is often meant rather than the data it holds.
 
 To lessen the confusion, we're often using terms like value entry, value name, name of the value entry, etc... and path stands for the path of the key.
 
 
 ### Default value (empty string)
 
-Every windows registry key always contains a default valiue with empty string `''` for name. 
+Every windows registry key always contains a default value with the empty string `''` for name. 
 
 ```js
 // read default value
@@ -62,7 +62,7 @@ import Registry from 'rage-edit'
 var {Registry} = require('rage-edit')
 ```
 
-It is modeled after ES6 `Map` class with methods like `.get()`, `.set()`, `.delete()` and few others. Those can be used in two modes - static and instance.
+It is modelled after ES6 `Map` class with methods like `.get()`, `.set()`, `.delete()` and a few others. Those can be used in two modes - static and instance.
 
 ### Static mode
 
@@ -107,8 +107,8 @@ await reg.get('\\blackwatch', 'leader')
 Retrieves key from `path` or content of the `name`d value entry at the path.
 
 #### Parameters:
-- `path` Path to a key to retrieve or from where to retrieve the value.
-- `[name]` Name of the value to retrieve. Optional. Default value (empty string) is retrieved if omitted.
+- `path` to a key to retrieve or from where to retrieve the value.
+- `[name]` of the value to retrieve. Optional. Default value (empty string) is retrieved if omitted.
 
 #### Returns:
 `Promise<object>`
@@ -134,11 +134,11 @@ Just like `.get()` but returns boolean depending on existence of the key or valu
 
 ### `.delete(path, [name])`
 
-Deletes registry key at given `path` or deletes a `name`d value entry within this key.
+Deletes a registry key at the given `path` or deletes a `name`d value entry within this key.
 
 #### Parameters
-- `path` Path of the key to delete, or the key that hosts the value to delete.
-- `[name]` Name of the value to delete.
+- `path` of the key to delete, or the key that hosts the value to delete.
+- `[name]` of the value to delete.
 
 #### Returns
 `Promise`
@@ -159,17 +159,17 @@ Registry.delete('HKLM\\Software\\Overwatch')
 
 ### `.set(path[, name[, data[, type]]])`
 
-Creates or rewrites key or `name`d value inside a key at given `path`.
+Creates or rewrites a key or `name`d value inside a key at the given `path`.
 
 If a key at the path doesn't exist it will be created as if `Registry.set(path)` was called beforehand.
 
-Creating new keys also creates empty default value inside it (that's how windows registry works) as if `Registry.set(path, '', '', 'REG_SZ')` was called with it.
+Creating new keys also creates an empty default value inside it (that's how windows registry works) as if `Registry.set(path, '', '', 'REG_SZ')` was called with it.
 
 #### Parameters
-- `path` Path of the key where the value should be created.
-- `[name]` Name of the value to create or modify. Optional. To modify key's default value (empty string) use `''`.
+- `path` of the key where the value should be created.
+- `[name]` of the value to create or modify. Optional. To modify the key's default value (empty string) use `''`.
 - `[data]` to store in the value entry. Optional.
-- `[type]` type of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
+- `[type]` of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
 
 |JS type|Registry type|
 |-|-|
@@ -201,7 +201,7 @@ Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', '', 'Mysterious branch of 
 ## Static properties
 
 
-**`DEFAULT = ''`** String used to represent name of default value.
+**`DEFAULT = ''`** String used to represent the name of the default value.
 
 **`VALUES = '$values'`** String used for naming values key in [simple mode](#simple)
 
@@ -228,12 +228,12 @@ reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
 
 ### `#get([subpath][, name])`
 
-Retrieves key from the instance's path or from given `subpath`.
+Retrieves key from the instance's path or from a given `subpath`.
 Or instead retrieves content of a value at the path if `name` is defined.
 
 #### Parameters:
 - `[subpath]` Path to a subkey where the value is stored. Optional. Defaults to `this.path`.
-- `[name]` Name of the value to retrieve. Optional. Default value (empty string) is retrieved if omitted.
+- `[name]` of the value to retrieve. Optional. Default value (empty string) is retrieved if omitted.
 
 #### Returns:
 `Promise<object>`
@@ -274,7 +274,7 @@ Alternatively deletes `name`d value from the key.
 
 #### Parameters:
 - `[subpath]` Path to a subkey where the value is stored. Optional. Defaults to `this.path`.
-- `[name]` Name of the value to delete.
+- `[name]` of the value to delete.
 
 #### Returns:
 `Promise`
@@ -287,10 +287,10 @@ Creates or rewrites `name`d value inside instance's path or at given `subpath` k
 Alternatively creates subkey at `subpath` if `name` and `data` are undefined.
 
 #### Parameters
-- `[subpath]` Path of the subkey to create (or where to set value). Optional if `name` is defined. **`subpath` has to always begin with backslash `\` otherwise it will be mistaken as `name`**
-- `[name]` Name of the value to create or modify. Optional if `subpath` is defined in which case no value is created, only the subkey. To modify key's default value (empty string) use `''`.
+- `[subpath]` Path of the subkey to create (or where to set value). Optional if `name` is defined. **`subpath` has to always begin with a backslash `\` otherwise it will be mistaken as `name`**
+- `[name]` of the value to create or modify. Optional if `subpath` is defined in which case no value is created, only the subkey. To modify key's default value (empty string) use `''`.
 - `[data]` to be stored in the value entry. Optional.
-- `[type]` type of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
+- `[type]` of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
 
 #### Returns:
 `Promise`
@@ -331,11 +331,11 @@ reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
 
 ## Output format
 
-Retrieving data from the registry poses a complication. Format of the output cannot be as straight forward as JSON nested structure because registry better resembles XML tree where each node can have both a children nodes and also attributes. Windows registry key can host sub keys as well as value entries, both of which can have the same names leading to possible collision.
+Retrieving data from the registry poses a complication. Format of the output cannot be as straight forward as JSONs nested structure because the registry better resembles an XML tree where each node can have both a children nodes and also attributes. A Windows registry key can host sub keys as well as value entries, both of which can have the same names leading to possible collisions.
 
 Due to that `rage-edit` offers two types of output formats. `simple` and `complex`. By default `simple` is enabled globally for all calls.
 
-It can be set as a global default for all method calls, or specified manully in each method call in the `options` argument.
+It can be set as a global default for all method calls, or specified manually in each method call in the `options` argument.
 
 ```js
 // change format globally
@@ -347,7 +347,7 @@ Registry.get('HKCR\\Directory\\shell', {format: 'complex'}
 
 ### Simple
 
-Simple output tries to resemble JSON at much as possible while trying to avoid collisions of names of keys and values.
+Simple output tries to resemble JSON at much as possible while trying to avoid collisions with the names of keys and values.
 
 Key names are properties of the object. The key is represented by (stub of) another object. This is useful when calling `Registry.get()` in recursive mode.
 
@@ -370,9 +370,9 @@ So if your key has a subkey named `version` and also a value named `version`, yo
 }
 ```
 
-This format is optimized for nesting so you could do this.
+This format is optimized for nesting to allow you to do this.
 
-*Note: `.get()` calls are not recursive by default due to performance reasons. Following snippet serves as an example of how output can be nested, but the `HKLM` hive contains enormous ammounts of data and thus is not recommended to be queried recursively.*
+*Note: `.get()` calls are not recursive by default due to performance reasons. The following snippet serves as an example of how output can be nested, but the `HKLM` hive contains enormous amounts of data and thus is not recommended to be queried recursively.*
 
 ```js
 // Gets default value (empty string) of HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\FeedManager
@@ -425,9 +425,9 @@ software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].key
 
 
 
-# Caveats, edge cases & the weirdness of Sindows registry
+# Caveats, edge cases & the weirdness of Windows registry
 
-Windows registry has its fair share of footguns that you should be aware of. Not to mention the danger of damaging keys and values that are critical for proper operation of the OS.
+Windows registry has its fair share of footguns that you should be aware of. Not to mention the danger of damaging keys and values that are critical for the proper operation of the OS.
 
 ### Friendly reminder about HKCR, HKLM, 64b and Wow6432Nodes
 
@@ -439,7 +439,7 @@ Therefore
 
 `HKCU\Software\Classes` is a pointer to `HKUS\UserSid\Software\Classes` which is another pointer to `HKUS\${UserSid}_Classes`.
 
-But on on 64b it is pointed to subkey names `Wow6432Nodes`, so `HKUS\UserSid\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64b systems.
+But on on 64b it points to subkey names `Wow6432Nodes`, so `HKUS\UserSid\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64b systems.
 
 Example:
 |original key|pointer to|b|
@@ -482,7 +482,7 @@ await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adven
 // sidenote: value name is '', value data is 'Soldiers, scientists, adventurers, oddities...')
 ```
 
-**Default value cannot be deleted**. Attempting to do so `Registry.delete(path, '')` will not actually delete the entry, but only its data. Or rather it will set the data to some sort of an `undefined` or `null` (can be seen as `(value not set)` in `regedit`), which is unique to the default value.
+**Default value cannot be deleted**. Attempting to do so (`Registry.delete(path, '')`) will not actually delete the entry, but only its data. Or rather it will set the data to some sort of an `undefined` or `null` (can be seen as `(value not set)` in `regedit`), which is unique to the default value.
 
 In this state, the default value returns `undefined` when queried with `get()` it will not be listed in `$values`, despite actually existing - `has()` always returns `true`.
 
@@ -511,16 +511,16 @@ try {
 
 ### Error suppresion
 
-`rage-edit` deliberately suppresses error `The system was unable to find the specified registry key or value` that is thrown by `reg` command when nonexistant value or key is queried. Instead the promise is resolve with `undefined`.
+`rage-edit` deliberately suppresses error `The system was unable to find the specified registry key or value` that is thrown by the `reg` command when a non-existent value or key is queried. Instead the promise is resolve with `undefined`.
 
 All other errors (especially `Access is denied`) are thrown as expected and the promise will be rejected.
 
 
 ### Case sensitivity
 
-**Windows Registry is case insensitive.** That applies to key paths and value names. But there are some edge cases. `rage-edit` by default transforms all key paths and value names (*not the actual data of value entry*) to lowercase to prevent confusion.
+**Windows Registry is case insensitive.** That applies to key paths and value names. But there are some edge cases. `rage-edit` by default transforms all key paths and value names (*not the actual data of value entry*) to lowercase by default to prevent confusion.
 
-This does not affect input - you can still use all-caps paths and value names with uppercased character.
+This does not affect input - you can still use all-caps paths and value names with uppercased characters.
 
 ```js
 // both ways work and return the same value
@@ -570,7 +570,7 @@ HKEY_CLASSES_ROOT\.jpg
     perceivedtype    REG_SZ    image
 ```
 
-But omitting `/v` (value name) argument to query all contents of the key would return value entries with their true names (in this case `PerceivedType`).
+But omiting `/v` (value name) argument to query all contents of the key would return value entries with their true names (in this case `PerceivedType`).
 
 ```
 C:\WINDOWS\system32>reg query HKCR\.jpg
@@ -612,13 +612,13 @@ Registry.setValue('HKLM\\Some\\Path', 'name', Buffer.from('hello'))
 
 ### REG_DWORD and REG_QWORD
 
-Registry allows storing 32b values as DWORDS and 64b values as QWORDS.
+Windows Registry allows storing 32b values as DWORDS and 64b values as QWORDS.
 
-Javascript Number only supports 53 bit integers.
+Javascript Number only support 53 bit integers.
 
 DWORD values are automatically converted to and from Number by `rage-edit` automatically. 
 
-QWORD values cannot be converted due to JS limitations. `reg` command also retrieves the values in hex `Ox` notation and `rage-edit` does not change that.
+QWORD values cannot be converted due to JS limitations. The `reg` command also retrieves the values in hex `Ox` notation and `rage-edit` does not change that.
 
 ```js
 var value = 1234
