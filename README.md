@@ -1,5 +1,7 @@
 # rage-edit
 
+[![Join the chat at https://gitter.im/MikeKovarik/rage-edit](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 🗃 Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.
 
 
