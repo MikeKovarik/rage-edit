@@ -1,9 +1,12 @@
 # rage-edit
 
 [![NPM version](https://img.shields.io/npm/v/rage-edit.svg)](https://www.npmjs.com/package/rage-edit)
-[![Maintenance Status](http://img.shields.io/badge/status-maintained-brightgreen.svg?style=flat-square)](https://github.com/MikeKovarik/rage-edit/pulse)
+[![Dependency Status](https://david-dm.org/MikeKovarik/rage-edit.svg)](https://david-dm.org/MikeKovarik/rage-edit)
 [![devDependency Status](https://david-dm.org/MikeKovarik/rage-edit/dev-status.svg)](https://david-dm.org/MikeKovarik/rage-edit#info=devDependencies)
-[![Join the chat at https://gitter.im/MikeKovarik/rage-edit](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Maintenance Status](http://img.shields.io/badge/status-maintained-brightgreen.svg)](https://github.com/MikeKovarik/rage-edit/pulse)
+[![Known Vulnerabilities](https://snyk.io/test/github/MikeKovarik/rage-edit/badge.svg)](https://snyk.io/test/github/MikeKovarik/rage-edit)
+[![Discord](https://img.shields.io/discord/419198557363634178.svg)](https://discord.gg/v2mUmeD)
+[![Join the chat at Gitter](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 🗃 Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.
 
@@ -13,7 +16,6 @@
 ```js
 npm install rage-edit
 ```
-
 
 ## Keep in mind before using
 
@@ -636,6 +638,10 @@ Registry.get('HKLM\\Some\\Path', 'QwordValue') // '0x4D2'
 ```
 
 
-# Credits
+## Join the discussion
+
+We're at [Discord](https://discord.gg/v2mUmeD) and [Gitter](https://gitter.im/MikeKovarik/rage-edit). Come join us to discuss features, bugs and more.
+
+## Credits
 
 Made by Mike Kovařík, Mutiny.cz

@@ -1,6 +1,6 @@
 {
   "name": "rage-edit",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.",
   "keywords": ["windows", "registry", "regedit", "winreg"],
   "scripts": {
