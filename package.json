@@ -1,6 +1,6 @@
 {
   "name": "rage-edit",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.",
   "keywords": ["windows", "registry", "regedit", "winreg"],
   "scripts": {
@@ -10,11 +10,12 @@
   },
   "author": "Mike Kovařík",
   "license": "MIT",
+  "homepage": "http://mutiny.cz/rage-edit",
   "repository": {
     "type": "git",
     "url": "https://github.com/MikeKovarik/rage-edit.git"
   },
-  "dev-dependencies": {
+  "devDependencies": {
     "chai": "^4.1.2",
     "mocha": "^5.0.5",
     "rollup": "^0.57.1"
