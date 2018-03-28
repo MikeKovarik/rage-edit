@@ -1,0 +1,59 @@
+version: "2"
+
+checks: 
+  argument-count: 
+    enabled: true
+  
+  complex-logic: 
+    enabled: true
+  
+  file-lines: 
+    enabled: true
+  
+  identical-code: # language-specific defaults. an override will affect all languages.
+    enabled: true
+  
+  method-complexity: 
+    enabled: true
+  
+  method-count: 
+    enabled: true
+  
+  method-lines: 
+    enabled: false
+  
+  nested-control-flow: 
+    enabled: true
+  
+  return-statements: 
+    enabled: false
+  
+  similar-code: # language-specific defaults. an override will affect all languages.
+    enabled: true
+  
+exclude_patterns: 
+  - config/
+  - db/
+  - dist/
+  - features/
+  - "**/node_modules/"
+  - script/
+  - "**/spec/"
+  - "**/test/"
+  - "**/tests/"
+  - Tests/
+  - "**/vendor/"
+  - "**/*_test.go"
+  - "**/*.d.ts"
+  - test.js
+  - index.js
+
+plugins: 
+  eslint:
+    enabled: true
+    config:
+      extensions:
+      - .es6
+      - .js
+      - .jsx
+      - .mjs
