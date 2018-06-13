@@ -6,7 +6,7 @@
 [![Maintenance Status](http://img.shields.io/badge/status-maintained-brightgreen.svg)](https://github.com/MikeKovarik/rage-edit/pulse)
 [![Known Vulnerabilities](https://snyk.io/test/github/MikeKovarik/rage-edit/badge.svg)](https://snyk.io/test/github/MikeKovarik/rage-edit)
 [![Discord](https://img.shields.io/discord/419198557363634178.svg)](https://discord.gg/v2mUmeD)
-[![Join the chat at Gitter](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at Gitter](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Greenkeeper badge](https://badges.greenkeeper.io/MikeKovarik/rage-edit.svg)](https://greenkeeper.io/)
 
 🗃 Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.
 
