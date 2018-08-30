@@ -1,11 +1,10 @@
 import fs from 'fs'
 
 
-var pkg = fs.readFileSync('package.json')
-pkg = JSON.parse(pkg.toString())
-
+var pkg = JSON.parse(fs.readFileSync('package.json').toString())
 var nodeCoreModules = require('repl')._builtinLibs
-var globals = objectFromArray(nodeCoreModules)
+var external = [...nodeCoreModules, ...Object.keys(pkg.dependencies || {})]
+var globals = objectFromArray(external)
 
 export default {
 	treeshake: false,
@@ -13,9 +12,10 @@ export default {
 	output: {
 		file: `index.js`,
 		format: 'umd',
+		name: pkg.name,
+		globals,
 	},
-	name: pkg.name,
-	globals,
+	external,
 }
 
 function objectFromArray(arr) {

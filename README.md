@@ -1,12 +1,13 @@
 # rage-edit
 
-[![NPM version](https://img.shields.io/npm/v/rage-edit.svg)](https://www.npmjs.com/package/rage-edit)
+[![NPM](https://img.shields.io/npm/v/rage-edit.svg)](https://www.npmjs.com/package/rage-edit)
 [![Dependency Status](https://david-dm.org/MikeKovarik/rage-edit.svg)](https://david-dm.org/MikeKovarik/rage-edit)
 [![devDependency Status](https://david-dm.org/MikeKovarik/rage-edit/dev-status.svg)](https://david-dm.org/MikeKovarik/rage-edit#info=devDependencies)
 [![Maintenance Status](http://img.shields.io/badge/status-maintained-brightgreen.svg)](https://github.com/MikeKovarik/rage-edit/pulse)
 [![Known Vulnerabilities](https://snyk.io/test/github/MikeKovarik/rage-edit/badge.svg)](https://snyk.io/test/github/MikeKovarik/rage-edit)
 [![Discord](https://img.shields.io/discord/419198557363634178.svg)](https://discord.gg/v2mUmeD)
-[![Join the chat at Gitter](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/MikeKovarik/rage-edit.svg)](https://gitter.im/MikeKovarik/rage-edit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Maintainability](https://api.codeclimate.com/v1/badges/f4c0ee405c46126d6325/maintainability)](https://codeclimate.com/github/MikeKovarik/rage-edit/maintainability)
 
 🗃 Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.
 

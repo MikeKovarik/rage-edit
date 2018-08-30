@@ -120,7 +120,6 @@ Registry.getKeys = async function(path, options) {
 	var result = await execute(['query', path])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
-
 	// REG can take shorter paths, but returns strictily long paths.
 	// Convert the query path to full path.
 	var fullPath = extendKeyPath(path)

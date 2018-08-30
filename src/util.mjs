@@ -1,5 +1,5 @@
 import {Registry} from './Registry.mjs'
-import {spawn} from 'child_process'
+import cp from 'child_process'
 import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
 
 
@@ -7,45 +7,62 @@ const ERR_MSG_NOT_FOUND = 'ERROR: The system was unable to find the specified re
 
 const stdio = ['ignore', 'pipe', 'pipe']
 
-export function execute(args) {
 
-	return new Promise((resolve, reject) => {
-
-		var proc = spawn('reg', args, {stdio})
-
-		var output = ''
-		var error = ''
-		proc.stdout.on('data', data => output += data.toString())
-		proc.stderr.on('data', data => error  += data.toString())
-
-		proc.on('close', code => {
-			// REG command has finished running, resolve result or throw error if any occured.
-			if (error.length) {
-				var line = error.trim().split('\r\n')[0]
-				// Return undefined if the key path does not exist. Or propagate the error forward.
-				if (line === ERR_MSG_NOT_FOUND) {
-					resolve(undefined)
-				} else {
-					var message = `${line.slice(7)} - Command 'reg ${args.join(' ')}'`
-					var err = new Error(message)
-					err.stack = undefined
-					reject(err)
-				}
-			} else {
-				resolve(output)
-			}
-			proc.removeAllListeners()
-		})
-
-		//proc.on('error', err => {
-		//	console.error('process error', err)
-		//	reject(err)
-		//	proc.removeAllListeners()
-		//})
-
-	})
-
+function promiseOnce(eventEmitter, event) {
+	return new Promise(resolve => eventEmitter.once(event, resolve))
 }
+
+
+// Promise wrapper for child_process.spawn().
+var spawnProcess = async args => {
+	var proc = cp.spawn('reg.exe', args, {stdio})
+
+	var stdout = ''
+	var stderr = ''
+	proc.stdout.on('data', data => stdout += data.toString())
+	proc.stderr.on('data', data => stderr += data.toString())
+
+	//var code = await promiseOnce(proc, 'exit')
+	var code = await promiseOnce(proc, 'close')
+
+	proc.removeAllListeners()
+
+	//proc.on('error', err => {
+	//	console.error('process error', err)
+	//	reject(err)
+	//	proc.removeAllListeners()
+	//})
+
+	return {stdout, stderr, code}
+}
+
+// Replaces default spawnProcess() that uses Node's child_process.spawn().
+export function _replaceProcessSpawner(externalHook) {
+	spawnProcess = externalHook
+}
+
+export async function execute(args) {
+	var {stdout, stderr, code} = await spawnProcess(args)
+
+	// REG command has finished running, resolve result or throw error if any occured.
+	if (stderr.length) {
+		var line = stderr.trim().split('\r\n')[0]
+		if (line === ERR_MSG_NOT_FOUND) {
+			// Return undefined if the key path does not exist.
+			return undefined
+		} else {
+			// Propagate the error forward.
+			var message = `${line.slice(7)} - Command 'reg ${args.join(' ')}'`
+			var err = new Error(message)
+			delete err.stack
+			throw err
+		}
+	} else {
+	//} else if (code === 0) {
+		return stdout
+	}
+}
+
 
 export function inferAndStringifyData(data, type) {
 	if (data === undefined || data === null)

@@ -54,7 +54,9 @@ describe('Registry static', () => {
 		})
 
 		it('returns empty array if no subkeys', async () => {
-			var keys = await Registry.getKeys(PATH_BLOCK)
+			// note: .txt pobably always has ShellNew subkey. It's best bet for writing test without
+			// having to employ other methods like setKey()
+			var keys = await Registry.getKeys('HKCR\\.txt\\ShellNew')
 			assert.isEmpty(keys)
 		})
 
