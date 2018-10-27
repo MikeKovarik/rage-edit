@@ -523,6 +523,13 @@ try {
 
 All other errors (especially `Access is denied`) are thrown as expected and the promise will be rejected.
 
+For Windows locales other than English - US, make sure to determine the localized error messages first:
+
+```js
+import {detectErrorMessages} from 'rage-edit'
+
+await detectErrorMessages()
+```
 
 ### Case sensitivity
 
