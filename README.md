@@ -445,13 +445,13 @@ Windows registry has its fair share of footguns that you should be aware of. Not
 
 Therefore
 
-`HKCU\Software\Classes` is a pointer to `HKUS\UserSid\Software\Classes` which is another pointer to `HKUS\${UserSid}_Classes`.
+`HKCU\Software\Classes` is a pointer to `HKUS\${UserSid}\Software\Classes` which is another pointer to `HKUS\${UserSid}_Classes`.
 
-But on on 64b it points to subkey names `Wow6432Nodes`, so `HKUS\UserSid\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64b systems.
+But on on 64b it points to subkey `Wow6432Nodes`, so `HKUS\${UserSid}\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64b systems.
 
 Example:
 |original key|pointer to|b|
-|-|-|-
+|-|-|-|
 |`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\CLSID`|32b|
 |`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\Wow6432Node\CLSID`|64b|
 
@@ -490,7 +490,7 @@ await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adven
 // sidenote: value name is '', value data is 'Soldiers, scientists, adventurers, oddities...')
 ```
 
-**Default value cannot be deleted**. Attempting to do so (`Registry.delete(path, '')`) will not actually delete the entry, but only its data. Or rather it will set the data to some sort of an `undefined` or `null` (can be seen as `(value not set)` in `regedit`), which is unique to the default value.
+**Default value cannot be deleted**. Attempting to do so (`Registry.delete(path, '')`) will not actually delete the entry, but only its data. Or rather it will set the data to some sort of `undefined` or `null` (can be seen as `(value not set)` in `regedit`), which is unique to the default value.
 
 In this state, the default value returns `undefined` when queried with `get()` it will not be listed in `$values`, despite actually existing - `has()` always returns `true`.
 
