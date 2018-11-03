@@ -6,16 +6,29 @@ import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.m
 let ERR_MSG_NOT_FOUND = 'ERROR: The system was unable to find the specified registry key or value.'
 let errorMessageDetectionPromise
 
-const stdio = ['ignore', 'pipe', 'pipe']
+export function detectErrorMessages() {
+	// ensure we run this only once
+	if (!errorMessageDetectionPromise)
+		errorMessageDetectionPromise = _detectErrorMessagesInternal()
+	return errorMessageDetectionPromise
+}
 
+async function _detectErrorMessagesInternal() {
+	var {stderr} = await spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
+	ERR_MSG_NOT_FOUND = getErrLine(stderr)
+}
+
+function getErrLine(stderr) {
+	return stderr.trim().split('\r\n')[0]
+}
 
 function promiseOnce(eventEmitter, event) {
 	return new Promise(resolve => eventEmitter.once(event, resolve))
 }
 
-
 // Promise wrapper for child_process.spawn().
 var spawnProcess = async args => {
+	var stdio = ['ignore', 'pipe', 'pipe']
 	var proc = cp.spawn('reg.exe', args, {stdio})
 
 	var stdout = ''
@@ -23,47 +36,43 @@ var spawnProcess = async args => {
 	proc.stdout.on('data', data => stdout += data.toString())
 	proc.stderr.on('data', data => stderr += data.toString())
 
-	//var code = await promiseOnce(proc, 'exit')
-	var code = await promiseOnce(proc, 'close')
+	var result = await Promise.race([
+		promiseOnce(proc, 'close'),
+		promiseOnce(proc, 'error'),
+	])
 
 	proc.removeAllListeners()
 
-	//proc.on('error', err => {
-	//	console.error('process error', err)
-	//	reject(err)
-	//	proc.removeAllListeners()
-	//})
-
-	return {stdout, stderr, code}
+	if (result instanceof Error)
+		throw result
+	else
+		return {stdout, stderr}
 }
 
-// Replaces default spawnProcess() that uses Node's child_process.spawn().
+// Replaces default spawnProcess() with custom means of spawning reg.exe.
+// For example allows to run the library in restricted environments.
+// Default spawnProcess() uses Node's child_process.spawn().
 export function _replaceProcessSpawner(externalHook) {
 	spawnProcess = externalHook
 }
 
-export async function execute(args) {
-	var {stdout, stderr, code} = await spawnProcess(args)
-
-	// REG command has finished running, resolve result or throw error if any occured.
-	if (stderr.length) {
-		var line = stderr.trim().split('\r\n')[0]
-		if (line === ERR_MSG_NOT_FOUND) {
-			// Return undefined if the key path does not exist.
-			return undefined
-		} else {
-			// Propagate the error forward.
-			var message = `${line.slice(7)} - Command 'reg ${args.join(' ')}'`
-			var err = new Error(message)
-			delete err.stack
-			throw err
-		}
-	} else {
-	//} else if (code === 0) {
-		return stdout
+class RegError extends Error {
+	constructor(message) {
+		super(message)
+		delete this.stack
 	}
 }
 
+export async function execute(args) {
+	var {stdout, stderr} = await spawnProcess(args)
+	// REG command has finished running, resolve result or throw error if any occured.
+	if (stderr.length === 0) return stdout
+	var line = getErrLine(stderr)
+	// Return undefined if the key path does not exist.
+	if (line === ERR_MSG_NOT_FOUND) return undefined
+	// Propagate the error forward.
+	throw new RegError(`${line.slice(7)} - Command 'reg ${args.join(' ')}'`)
+}
 
 export function inferAndStringifyData(data, type) {
 	if (data === undefined || data === null)
@@ -150,17 +159,4 @@ export function getOptions(userOptions) {
 		return Object.assign(defaultOptions, userOptions)
 	else
 		return defaultOptions
-}
-
-async function _detectErrorMessagesInternal () {
-	var {stderr} = await spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
-	ERR_MSG_NOT_FOUND = stderr.trim().split('\r\n')[0]
-}
-
-export function detectErrorMessages () {
-	// ensure we run this only once
-	if (!errorMessageDetectionPromise) {
-		errorMessageDetectionPromise = _detectErrorMessagesInternal()
-	}
-	return errorMessageDetectionPromise
 }
