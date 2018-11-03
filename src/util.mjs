@@ -3,7 +3,8 @@ import cp from 'child_process'
 import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
 
 
-const ERR_MSG_NOT_FOUND = 'ERROR: The system was unable to find the specified registry key or value.'
+let ERR_MSG_NOT_FOUND = 'ERROR: The system was unable to find the specified registry key or value.'
+let errorMessageDetectionPromise
 
 const stdio = ['ignore', 'pipe', 'pipe']
 
@@ -149,4 +150,17 @@ export function getOptions(userOptions) {
 		return Object.assign(defaultOptions, userOptions)
 	else
 		return defaultOptions
+}
+
+async function _detectErrorMessagesInternal () {
+	var {stderr} = await spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
+	ERR_MSG_NOT_FOUND = stderr.trim().split('\r\n')[0]
+}
+
+export function detectErrorMessages () {
+	// ensure we run this only once
+	if (!errorMessageDetectionPromise) {
+		errorMessageDetectionPromise = _detectErrorMessagesInternal()
+	}
+	return errorMessageDetectionPromise
 }
