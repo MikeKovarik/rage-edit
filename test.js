@@ -152,17 +152,17 @@ describe('Registry static', () => {
 		// NOTE: paths and value names are key insensitive and whenever its queries
 		// reg command will always respond. But when 
 		it('value name is case insensitive by default', async () => {
-			var result = await Registry.getValues('HKCR\\.exe')
-			assert.exists(result['content type'])
-			result = await Registry.getValues('HKCR\\.exe')
-			assert.notExists(result['Content Type'])
+			var result = await Registry.getValues('HKCR\\*')
+			assert.exists(result['alwaysshowext'])
+			result = await Registry.getValues('HKCR\\*')
+			assert.notExists(result['AlwaysShowExt'])
 		})
 
 		it('can be switched to case sensitive', async () => {
-			var result = await Registry.getValues('HKCR\\.exe', {lowercase: false})
-			assert.exists(result['Content Type'])
-			result = await Registry.getValues('HKCR\\.exe', {lowercase: false})
-			assert.notExists(result['content type'])
+			var result = await Registry.getValues('HKCR\\*', {lowercase: false})
+			assert.exists(result['AlwaysShowExt'])
+			result = await Registry.getValues('HKCR\\*', {lowercase: false})
+			assert.notExists(result['alwaysshowext'])
 		})
 
 
@@ -216,22 +216,22 @@ describe('Registry static', () => {
 		})
 
 		it('returns string if the value entry has string data', async () => {
-			var result = await Registry.getValue('HKCR\\.exe', 'Content Type')
+			var result = await Registry.getValue('HKCR\\*', 'AlwaysShowExt')
 			assert.isString(result)
 		})
 
 		// NOTE: reg command is insensitive 
 		it('value name is case insensitive by default', async () => {
-			var result = await Registry.getValue('HKCR\\.exe', 'Content Type')
+			var result = await Registry.getValue('HKCR\\*', 'AlwaysShowExt')
 			assert.exists(result)
-			result = await Registry.getValue('HKCR\\.exe', 'content type')
+			result = await Registry.getValue('HKCR\\*', 'alwaysshowext')
 			assert.exists(result)
 		})
 
 		//it('can be switched to case sensitive', async () => {
-		//	var result = await Registry.getValue('HKCR\\.exe', 'Content Type', true)
+		//	var result = await Registry.getValue('HKCR\\*', 'AlwaysShowExt', true)
 		//	assert.exists(result)
-		//	result = await Registry.getValue('HKCR\\.exe', 'content type', true)
+		//	result = await Registry.getValue('HKCR\\*', 'alwaysshowext', true)
 		//	assert.notExists(result)
 		//})
 
@@ -293,12 +293,12 @@ describe('Registry static', () => {
 		describe('complex form', () => {
 
 			it('returns an object', async () => {
-				var entry = await Registry.getValue('HKCR\\.exe', 'Content Type', {format: 'complex'})
+				var entry = await Registry.getValue('HKCR\\*', 'AlwaysShowExt', {format: 'complex'})
 				assert.isObject(entry)
 			})
 
 			it(`has 'name', 'type' and 'data' fields`, async () => {
-				var entry = await Registry.getValue('HKCR\\.exe', 'Content Type', {format: 'complex'})
+				var entry = await Registry.getValue('HKCR\\*', 'AlwaysShowExt', {format: 'complex'})
 				assert.isString(entry.name)
 				assert.isTrue('data' in entry)
 				assert.isString(entry.type)
@@ -444,13 +444,13 @@ describe('Registry static', () => {
 		})
 
 		it('only using one parameter serves as alias for .getKey', async () => {
-			var result = await Registry.get('HKCR\\.exe')
+			var result = await Registry.get('HKCR\\*')
 			assert.isObject(result)
-			assert.isString(result.$values['content type'])
+			assert.isString(result.$values['alwaysshowext'])
 		})
 
 		it('using two parameters serves as alias for .getValue', async () => {
-			var result = await Registry.get('HKCR\\.exe', 'content type')
+			var result = await Registry.get('HKCR\\*', 'alwaysshowext')
 			assert.isString(result)
 		})
 
@@ -481,11 +481,11 @@ describe('Registry static', () => {
 		})
 
 		it('returns true if value entry exists at given path', async () => {
-			assert.isTrue(await Registry.hasValue('HKCR\\.exe', 'Content Type'))
+			assert.isTrue(await Registry.hasValue('HKCR\\*', 'AlwaysShowExt'))
 		})
 
 		it(`returns false if value entry doesn't exist at given path`, async () => {
-			assert.isFalse(await Registry.hasValue('HKCR\\.exe', 'foo-bar non existent'))
+			assert.isFalse(await Registry.hasValue('HKCR\\*', 'foo-bar non existent'))
 		})
 
 	})
@@ -506,11 +506,11 @@ describe('Registry static', () => {
 		})
 
 		it('returns true if value entry exists at given path', async () => {
-			assert.isTrue(await Registry.has('HKCR\\.exe', 'Content Type'))
+			assert.isTrue(await Registry.has('HKCR\\*', 'AlwaysShowExt'))
 		})
 
 		it(`returns false if value entry doesn't exist at given path`, async () => {
-			assert.isFalse(await Registry.has('HKCR\\.exe', 'foo-bar non existent'))
+			assert.isFalse(await Registry.has('HKCR\\*', 'foo-bar non existent'))
 		})
 
 	})
