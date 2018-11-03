@@ -523,14 +523,6 @@ try {
 
 All other errors (especially `Access is denied`) are thrown as expected and the promise will be rejected.
 
-For Windows locales other than English - US, make sure to determine the localized error messages first:
-
-```js
-import {detectErrorMessages} from 'rage-edit'
-
-await detectErrorMessages()
-```
-
 ### Case sensitivity
 
 **Windows Registry is case insensitive.** That applies to key paths and value names. But there are some edge cases. `rage-edit` by default transforms all key paths and value names (*not the actual data of value entry*) to lowercase by default to prevent confusion.

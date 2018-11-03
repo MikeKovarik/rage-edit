@@ -1,25 +1,41 @@
 import {Registry} from './Registry.mjs'
-import cp from 'child_process'
+import cp, { exec } from 'child_process'
 import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
 
 
-let ERR_MSG_NOT_FOUND = 'ERROR: The system was unable to find the specified registry key or value.'
-let errorMessageDetectionPromise
+let ERR_NOT_FOUND
+let errMessagePromise
 
-export function detectErrorMessages() {
-	// ensure we run this only once
-	if (!errorMessageDetectionPromise)
-		errorMessageDetectionPromise = _detectErrorMessagesInternal()
-	return errorMessageDetectionPromise
-}
-
-async function _detectErrorMessagesInternal() {
-	var {stderr} = await spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
-	ERR_MSG_NOT_FOUND = getErrLine(stderr)
-}
-
-function getErrLine(stderr) {
+function getErrorLine(stderr) {
 	return stderr.trim().split('\r\n')[0]
+}
+
+// Method for calling the reg.exe commands.
+export var execute
+
+// Temporary wrapper over execute() function that first gets the ERR_NOT_FOUND message
+// becase reg.exe is locale based. Only runs on the first (few) calls.
+execute = async args => {
+	// Ensure we get the error message only once.
+	if (!errMessagePromise)
+		errMessagePromise = spawnProcess(['QUERY', 'HKLM\\NONEXISTENT']).then(res => getErrorLine(res.stderr))
+	// Postpone all execute() calls until the ERR_NOT_FOUND message is resolved. 
+	ERR_NOT_FOUND = await errMessagePromise
+	// Replace this temporary function with actual execute().
+	execute = _execute
+	return _execute(args)
+}
+
+// Actual execute() function.
+var _execute = async args => {
+	var {stdout, stderr} = await spawnProcess(args)
+	// REG command has finished running, resolve result or throw error if any occured.
+	if (stderr.length === 0) return stdout
+	var line = getErrorLine(stderr)
+	// Return undefined if the key path does not exist.
+	if (line === ERR_NOT_FOUND) return undefined
+	// Propagate the error forward.
+	throw new RegError(`${line.slice(7)} - Command 'reg ${args.join(' ')}'`)
 }
 
 function promiseOnce(eventEmitter, event) {
@@ -61,17 +77,6 @@ class RegError extends Error {
 		super(message)
 		delete this.stack
 	}
-}
-
-export async function execute(args) {
-	var {stdout, stderr} = await spawnProcess(args)
-	// REG command has finished running, resolve result or throw error if any occured.
-	if (stderr.length === 0) return stdout
-	var line = getErrLine(stderr)
-	// Return undefined if the key path does not exist.
-	if (line === ERR_MSG_NOT_FOUND) return undefined
-	// Propagate the error forward.
-	throw new RegError(`${line.slice(7)} - Command 'reg ${args.join(' ')}'`)
 }
 
 export function inferAndStringifyData(data, type) {
