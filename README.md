@@ -450,6 +450,7 @@ Therefore
 But on on 64b it points to subkey `Wow6432Nodes`, so `HKUS\${UserSid}\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64b systems.
 
 Example:
+
 |original key|pointer to|b|
 |-|-|-|
 |`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\CLSID`|32b|
