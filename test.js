@@ -17,13 +17,14 @@ assert.willNotThrow = async promise => {
 	assert.isNotError(await promise.catch(err => err), 'expected to not throw')
 }
 
-
-var OW_PATH = 'HKLM\\SOFTWARE\\Overwatch'
-var BW_PATH = 'HKLM\\SOFTWARE\\Overwatch\\Blackwatch'
+const isNode64bit = (process.arch == 'x64')
 
 const PATH = 'HKLM\\SOFTWARE\\MikeKovarik'
+const PATH_32BIT = 'HKLM\\SOFTWARE\\WOW6432Node\\MikeKovarik'
 const PATH_NONEXISTENT = 'HKCR\\Some\\made\\up\\path\\that\\doesnt\\exist'
 const PATH_BLOCK = 'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Blocked'
+const OW_PATH = 'HKLM\\SOFTWARE\\Overwatch'
+const BW_PATH = 'HKLM\\SOFTWARE\\Overwatch\\Blackwatch'
 
 function noop() {}
 var resolveError = err => err
@@ -79,6 +80,35 @@ describe('Registry static', () => {
 			var keys = await Registry.getKeys('HKCR\\Directory\\Background\\shellex', {lowercase: false})
 			assert.isNotEmpty(keys)
 			assert.include(keys, 'ContextMenuHandlers')
+		})
+
+		it('returns different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+
+			var keys64 = await Registry.getKeys(path, {mode: '64bit'})
+			var keys32 = await Registry.getKeys(path, {mode: '32bit'})
+
+			assert.isNotEmpty(keys64)
+			assert.isNotEmpty(keys32)
+
+			assert.notSameMembers(keys64, keys32)
+		})
+
+		it('returns same values for 32bit mode and WOW6432Node key', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+
+			var keys32 = await Registry.getKeys(path, {mode: '32bit'})
+			var keysWow = await Registry.getKeys(pathWow)
+
+			assert.isNotEmpty(keys32)
+			assert.isNotEmpty(keysWow)
+
+			assert.sameMembers(keys32, keysWow)
 		})
 
 		describe('complex form', () => {
@@ -165,6 +195,35 @@ describe('Registry static', () => {
 			assert.notExists(result['alwaysshowext'])
 		})
 
+		it('returns different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+
+			var values64 = await Registry.getValues(path, {mode: '64bit'})
+			var values32 = await Registry.getValues(path, {mode: '32bit'})
+
+			assert.isNotEmpty(values64)
+			assert.isNotEmpty(values32)
+
+			assert.notEqual(values64.path, values32.path)
+		})
+
+		it('returns same values for 32bit mode and WOW6432Node key', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
+
+			var valuesWow = await Registry.getValues(pathWow)
+			var values32 = await Registry.getValues(path, {mode: '32bit'})
+
+			assert.isNotEmpty(valuesWow)
+			assert.isNotEmpty(values32)
+
+			assert.equal(valuesWow.path, values32.path)
+		})
+
 
 
 		describe('complex form', () => {
@@ -240,10 +299,31 @@ describe('Registry static', () => {
 			assert.equal(result, undefined)
 		})
 
+		it('returns different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+
+			var value64 = await Registry.getValue(path, 'path', {mode: '64bit'})
+			var value32 = await Registry.getValue(path, 'path', {mode: '32bit'})
+
+			assert.notEqual(value64.path, value32.path)
+		})
+
+		it('returns same values for 32bit mode and WOW6432Node key', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+ 
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
+
+			var valueWow = await Registry.getValue(pathWow, 'path')
+			var value32 = await Registry.getValue(path, 'path', {mode: '32bit'})
+
+			assert.equal(valueWow, value32)
+		})
+
 
 		describe('output type casting', () => {
-
-			const PATH = 'HKLM\\SOFTWARE\\MikeKovarik'
 
 			it('reads REG_SZ as string', async () => {
 				var NAME = 'casting-1'
@@ -332,6 +412,35 @@ describe('Registry static', () => {
 			var result = await Registry.getKey('HKCR\\Directory\\shellex', {lowercase: false})
 			assert.isObject(result['ContextMenuHandlers'])
 			assert.notExists(result['contextmenuhandlers'])
+		})
+
+		it('returns different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+
+			var key64 = await Registry.getKey(path, {mode: '64bit'})
+			var key32 = await Registry.getKey(path, {mode: '32bit'})
+
+			assert.isNotEmpty(key64)
+			assert.isNotEmpty(key32)
+
+			assert.notEqual(key64.$values.path, key32.$values.path)
+		})
+
+		it('returns same values for 32bit mode and WOW6432Node key', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
+
+			var keyWow = await Registry.getKey(pathWow)
+			var key32 = await Registry.getKey(path, {mode: '32bit'})
+
+			assert.isNotEmpty(keyWow)
+			assert.isNotEmpty(key32)
+
+			assert.equal(keyWow.$values.path, key32.$values.path)
 		})
 
 		describe('simple format', () => {
@@ -454,6 +563,20 @@ describe('Registry static', () => {
 			assert.isString(result)
 		})
 
+		it('works using 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
+
+			var value64 = await Registry.get(path, 'path', {mode: '64bit'})
+			var value32 = await Registry.get(path, 'path', {mode: '32bit'})
+
+			assert.isNotEmpty(value64)
+			assert.isNotEmpty(value32)
+
+			assert.notEqual(value64, value32)
+		})
+
 	})
 
 
@@ -468,7 +591,24 @@ describe('Registry static', () => {
 		})
 
 		it(`returns false if key at given path doesn't exist`, async () => {
-			assert.isFalse(await Registry.hasKey('HKLM\\SOFTWARE\\MikeKovarik\\non\\existent'))
+			assert.isFalse(await Registry.hasKey(PATH_NONEXISTENT))
+		})
+		
+		it('checks different keys in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+			await Registry.setKey(PATH)
+
+			assert.isTrue(await Registry.hasKey(PATH, {mode: '64bit'}))
+			assert.isFalse(await Registry.hasKey(PATH, {mode: '32bit'}))
+
+			await Registry.delete(PATH)
+			await Registry.setKey(PATH_32BIT)
+
+			assert.isFalse(await Registry.hasKey(PATH, {mode: '64bit'}))
+			assert.isTrue(await Registry.hasKey(PATH, {mode: '32bit'}))
 		})
 
 	})
@@ -488,6 +628,23 @@ describe('Registry static', () => {
 			assert.isFalse(await Registry.hasValue('HKCR\\*', 'foo-bar non existent'))
 		})
 
+		it('checks different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+			await Registry.setValue(PATH, 'regMode64bit')
+
+			assert.isTrue(await Registry.hasValue(PATH, 'regMode64bit', {mode: '64bit'}))
+			assert.isFalse(await Registry.hasValue(PATH, 'regMode64bit', {mode: '32bit'}))
+
+			await Registry.delete(PATH)
+			await Registry.setValue(PATH_32BIT, 'regMode32bit')
+
+			assert.isFalse(await Registry.hasValue(PATH, 'regMode32bit', {mode: '64bit'}))
+			assert.isTrue(await Registry.hasValue(PATH, 'regMode32bit', {mode: '32bit'}))
+		})
+
 	})
 
 
@@ -502,7 +659,7 @@ describe('Registry static', () => {
 		})
 
 		it(`returns false if key at given path doesn't exist`, async () => {
-			assert.isFalse(await Registry.has('HKLM\\SOFTWARE\\MikeKovarik\\non\\existent'))
+			assert.isFalse(await Registry.has(PATH_NONEXISTENT))
 		})
 
 		it('returns true if value entry exists at given path', async () => {
@@ -511,6 +668,40 @@ describe('Registry static', () => {
 
 		it(`returns false if value entry doesn't exist at given path`, async () => {
 			assert.isFalse(await Registry.has('HKCR\\*', 'foo-bar non existent'))
+		})
+
+		it('checks different keys in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+			await Registry.setKey(PATH)
+
+			assert.isTrue(await Registry.has(PATH, {mode: '64bit'}))
+			assert.isFalse(await Registry.has(PATH, {mode: '32bit'}))
+
+			await Registry.delete(PATH)
+			await Registry.setKey(PATH_32BIT)
+
+			assert.isFalse(await Registry.has(PATH, {mode: '64bit'}))
+			assert.isTrue(await Registry.has(PATH, {mode: '32bit'}))
+		})
+
+		it('checks different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+			await Registry.setValue(PATH, 'regMode64bit')
+
+			assert.isTrue(await Registry.has(PATH, 'regMode64bit', {mode: '64bit'}))
+			assert.isFalse(await Registry.has(PATH, 'regMode64bit', {mode: '32bit'}))
+
+			await Registry.delete(PATH)
+			await Registry.setValue(PATH_32BIT, 'regMode32bit')
+
+			assert.isFalse(await Registry.has(PATH, 'regMode32bit', {mode: '64bit'}))
+			assert.isTrue(await Registry.has(PATH, 'regMode32bit', {mode: '32bit'}))
 		})
 
 	})
@@ -534,7 +725,24 @@ describe('Registry static', () => {
 		})
 
 		it('deletion of nonexisting key does not throw', async () => {
-			await Registry.deleteKey('HKLM\\SOFTWARE\\MikeKovarik\\some\\random\\key')
+			await Registry.deleteKey(PATH_NONEXISTENT)
+		})
+
+		it('deletes different keys in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.setKey(PATH)
+			await Registry.setKey(PATH_32BIT)
+			await Registry.deleteKey(PATH, {mode: '64bit'})
+
+			assert.isFalse(await Registry.hasKey(PATH))
+			assert.isTrue(await Registry.hasKey(PATH_32BIT))
+
+			await Registry.setKey(PATH)
+			await Registry.deleteKey(PATH, {mode: '32bit'})
+
+			assert.isTrue(await Registry.hasKey(PATH))
+			assert.isFalse(await Registry.hasKey(PATH_32BIT))
 		})
 
 	})
@@ -567,6 +775,25 @@ describe('Registry static', () => {
 			await Registry.deleteValue(PATH, NAME)
 		})
 
+		it('deletes different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			const NAME = 'deleteme'
+
+			await Registry.set(PATH, NAME)
+			await Registry.set(PATH_32BIT, NAME)
+			await Registry.deleteValue(PATH, NAME, {mode: '64bit'})
+
+			assert.isFalse(await Registry.hasValue(PATH, NAME))
+			assert.isTrue(await Registry.hasValue(PATH_32BIT, NAME))
+
+			await Registry.set(PATH, NAME)
+			await Registry.deleteValue(PATH, NAME, {mode: '32bit'})
+
+			assert.isTrue(await Registry.hasValue(PATH, NAME))
+			assert.isFalse(await Registry.hasValue(PATH_32BIT, NAME))
+		})
+
 	})
 
 
@@ -593,6 +820,41 @@ describe('Registry static', () => {
 			assert.isFalse(await Registry.hasValue(PATH, NAME))
 		})
 
+		it('deletes different keys in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.setKey(PATH)
+			await Registry.setKey(PATH_32BIT)
+			await Registry.delete(PATH, {mode: '64bit'})
+
+			assert.isFalse(await Registry.hasKey(PATH))
+			assert.isTrue(await Registry.hasKey(PATH_32BIT))
+
+			await Registry.setKey(PATH)
+			await Registry.delete(PATH, {mode: '32bit'})
+
+			assert.isTrue(await Registry.hasKey(PATH))
+			assert.isFalse(await Registry.hasKey(PATH_32BIT))
+
+		})
+
+		it('deletes different values in 64bit and 32bit modes', async () => {
+			const NAME = 'deleteme'
+
+			await Registry.set(PATH, NAME)
+			await Registry.set(PATH_32BIT, NAME)
+			await Registry.delete(PATH, NAME, {mode: '64bit'})
+
+			assert.isFalse(await Registry.hasValue(PATH, NAME))
+			assert.isTrue(await Registry.hasValue(PATH_32BIT, NAME))
+
+			await Registry.set(PATH, NAME)
+			await Registry.delete(PATH, NAME, {mode: '32bit'})
+
+			assert.isTrue(await Registry.hasValue(PATH, NAME))
+			assert.isFalse(await Registry.hasValue(PATH_32BIT, NAME))
+		})
+
 	})
 
 
@@ -615,6 +877,25 @@ describe('Registry static', () => {
 			await Registry.setKey(PATH).catch(noop)
 			await Registry.setKey(PATH)
 			assert.isTrue(await Registry.hasKey(PATH))
+		})
+
+		it('creates different keys in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			await Registry.setKey(PATH, {mode: '64bit'})
+
+			assert.isTrue(await Registry.hasKey(PATH))
+			assert.isFalse(await Registry.hasKey(PATH_32BIT))
+
+			await Registry.delete(PATH)
+
+			await Registry.setKey(PATH, {mode: '32bit'})
+
+			assert.isFalse(await Registry.hasKey(PATH))
+			assert.isTrue(await Registry.hasKey(PATH_32BIT))
 		})
 
 	})
@@ -668,6 +949,19 @@ describe('Registry static', () => {
 			assert.isFalse(await Registry.hasKey(PATH + '\\deep'))
 			await Registry.setValue(PATH + '\\deep\\sub\\key', NAME, DATA)
 			assert.isTrue(await Registry.hasKey(PATH + '\\deep'))
+		})
+
+		it('creates different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			await Registry.setValue(PATH, 'regMode', 'reg64bit', {mode: '64bit'})
+			await Registry.setValue(PATH, 'regMode', 'reg32bit', {mode: '32bit'})
+
+			assert.equal(await Registry.getValue(PATH, 'regMode', 'reg64bit'))
+			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode', 'reg32bit'))
 		})
 
 
@@ -858,6 +1152,19 @@ describe('Registry static', () => {
 			assert.isTrue(await Registry.has(BW_PATH))
 			assert.equal(await Registry.get(OW_PATH, 'leader'), 'Jack Morrison')
 			assert.equal(await Registry.get(BW_PATH, 'leader'), 'Gabriel Reyes')
+		})
+
+		it('creates different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			await Registry.set(PATH, 'regMode', 'reg64bit', {mode: '64bit'})
+			await Registry.set(PATH, 'regMode', 'reg32bit', {mode: '32bit'})
+
+			assert.equal(await Registry.getValue(PATH, 'regMode', 'reg64bit'))
+			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode', 'reg32bit'))
 		})
 
 
@@ -1224,6 +1531,25 @@ describe('new Registry', () => {
 
 	})
 
+
+	describe('{mode}', () => {
+
+		it('works with 32 and 64 bit registry views', async () => {
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			var reg64 = new Registry(PATH, {mode: '64bit'})
+			var reg32 = new Registry(PATH, {mode: '32bit'})
+
+			await reg64.set('regMode', 'reg64bit')
+			await reg32.set('regMode', 'reg32bit')
+
+			assert.equal(await reg64.get('regMode'), 'reg64bit')
+			assert.equal(await reg32.get('regMode'), 'reg32bit')
+			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode', {mode: '64bit'}), 'reg32bit')
+		})
+
+	})
 
 })
 
