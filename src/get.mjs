@@ -278,9 +278,9 @@ function processValueLine(line, options) {
 	// value line starts with 4 spaces and consists of three items that are also spaces by 4 spaces.
 	// WARNING: Do not trim. Lines only start with 4 spaces, they don't end with 4 spaces unsless the value is empty string.
 	var [name, type, data] = line.slice(4).split('    ')
-	if (name === '(Default)')
+	if (name === Registry.DEFAULT_VERBOSE)
 		name = Registry.DEFAULT
-	if (data === '(value not set)')
+	if (data === Registry.VALUENOTSET_VERBOSE)
 		data = undefined
 	else if (options.lowercase)
 		name = name.toLowerCase()
