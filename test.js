@@ -1321,7 +1321,10 @@ describe('Registry static', () => {
 
 	describe('global options', () => {
 
-		after(() => Registry.format = 'simple')
+		after(() => {
+			Registry.format = 'simple'
+			Registry.mode = 'none'
+		})
 
 		it(`Registry.format = 'complex' is used for all calls`, async () => {
 			assert.isObject(await Registry.getValues('HKCR\\*'))
@@ -1336,6 +1339,8 @@ describe('Registry static', () => {
 			assert.isArray(await Registry.getValues('HKCR\\*'))
 			assert.isObject(await Registry.getValues('HKCR\\*', {format: 'simple'}))
 		})
+
+		// TODO: Registry.mode = '32bit'
 
 	})
 
@@ -1549,23 +1554,23 @@ describe('new Registry', () => {
 	})
 
 
-	describe('{mode}', () => {
-
-		it('works with 32 and 64 bit registry views', async () => {
-			await Registry.delete(PATH)
-			await Registry.delete(PATH_32BIT)
-
-			var reg64 = new Registry(PATH, {mode: '64bit'})
-			var reg32 = new Registry(PATH, {mode: '32bit'})
-
-			await reg64.set('reg-mode', 'reg64bit')
-			await reg32.set('reg-mode', 'reg32bit')
-
-			assert.equal(await reg64.get('reg-mode'), 'reg64bit')
-			assert.equal(await reg32.get('reg-mode'), 'reg32bit')
-			assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode', {mode: '64bit'}), 'reg32bit')
-		})
-
-	})
+	// describe('{mode}', () => {
+	//
+	// 	it('works with 32 and 64 bit registry views', async () => {
+	// 		await Registry.delete(PATH)
+	// 		await Registry.delete(PATH_32BIT)
+	//
+	// 		var reg64 = new Registry(PATH, {mode: '64bit'})
+	// 		var reg32 = new Registry(PATH, {mode: '32bit'})
+	//
+	// 		await reg64.set('reg-mode', 'reg64bit')
+	// 		await reg32.set('reg-mode', 'reg32bit')
+	//
+	// 		assert.equal(await reg64.get('reg-mode'), 'reg64bit')
+	// 		assert.equal(await reg32.get('reg-mode'), 'reg32bit')
+	// 		assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode', {mode: '64bit'}), 'reg32bit')
+	// 	})
+	//
+	// })
 
 })
