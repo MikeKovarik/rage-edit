@@ -185,7 +185,14 @@ Registry.hasKey = function(path, options) {
 
 
 // Returns true if a value at the path exists
-Registry.hasValue = async function(path, name = Registry.DEFAULT, options) {
+Registry.hasValue = async function(path, name, options) {
+	// Check if only path and options were passed
+	if (typeof name === 'object') {
+		options = name
+		name = Registry.DEFAULT
+	} else if (typeof name === 'undefined') {
+		name = Registry.DEFAULT
+	}
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
 	// Populate options with default values
