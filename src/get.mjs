@@ -1,4 +1,4 @@
-import {execute, sanitizePath, getOptions, parseValueData} from './util.mjs'
+import {execute, sanitizePath, getOptions, parseValueData, modeToArg} from './util.mjs'
 import {extendKeyPath} from './constants.mjs'
 import {Registry} from './Registry.mjs'
 
@@ -32,6 +32,15 @@ Registry.has = function(path, name) {
 	else
 		return Registry.hasValue(path, name)
 }
+// Registry.has = function(path, arg2, options) {
+// 	var type = typeof arg2
+// 	if (type === 'object')
+// 		return Registry.hasKey(path, undefined, arg2)
+// 	else if (type === 'undefined')
+// 		return Registry.hasKey(path)
+// 	else
+// 		return Registry.hasValue(path, name, options)
+// }
 
 
 Registry.getKey = async function(path, recursive, options) {
@@ -44,9 +53,9 @@ Registry.getKey = async function(path, recursive, options) {
 	}
 	options = getOptions(options)
 	if (recursive)
-		var result = await execute(['query', path, '/s'])
+		var result = await execute(['query', path, '/s', modeToArg(options.mode)])
 	else
-		var result = await execute(['query', path])
+		var result = await execute(['query', path, modeToArg(options.mode)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 	// Slight preprocessing of the returned result
@@ -92,9 +101,9 @@ Registry.getValue = async function(path, name = Registry.DEFAULT, options) {
 	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	if (name === Registry.DEFAULT)
-		var result = await execute(['query', path, '/ve'])
+		var result = await execute(['query', path, '/ve', modeToArg(options.mode)])
 	else
-		var result = await execute(['query', path, '/v', name])
+		var result = await execute(['query', path, '/v', name, modeToArg(options.mode)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 
@@ -117,7 +126,7 @@ Registry.getKeys = async function(path, options) {
 	path = sanitizePath(path)
 	options = getOptions(options)
 	// Create simple query at given path
-	var result = await execute(['query', path])
+	var result = await execute(['query', path, modeToArg(options.mode)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 	// REG can take shorter paths, but returns strictily long paths.
@@ -146,7 +155,7 @@ Registry.getValues = async function(path, options) {
 	path = sanitizePath(path)
 	options = getOptions(options)
 	// Create simple query at given path
-	var result = await execute(['query', path])
+	var result = await execute(['query', path, modeToArg(options.mode)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 	// Split result by lines and only keep the ones starting with space - only those contain value entry.
@@ -166,26 +175,28 @@ Registry.getValues = async function(path, options) {
 
 
 // Returns true if a key at the path exists
-Registry.hasKey = function(path) {
+Registry.hasKey = function(path, options) {
+	options = getOptions(options)
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
-	return execute(['query', path])
+	return execute(['query', path, modeToArg(options.mode)])
 		.then(result => result === undefined ? false : true)
 }
 
 
 // Returns true if a value at the path exists
-Registry.hasValue = async function(path, name = Registry.DEFAULT) {
+Registry.hasValue = async function(path, name = Registry.DEFAULT, options) {
+  options = getOptions(options)
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
 	if (name === Registry.DEFAULT)
-		var result = await execute(['query', path, '/ve'])
+		var result = await execute(['query', path, '/ve', modeToArg(options.mode)])
 	else
-		var result = await execute(['query', path, '/v', name])
+		var result = await execute(['query', path, '/v', name, modeToArg(options.mode)])
 	if (result === undefined) return false
 	// Default value name is represented by a word default in brackets.
 	if (name === Registry.DEFAULT)

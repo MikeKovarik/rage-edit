@@ -1,6 +1,7 @@
 import {Registry} from './Registry.mjs'
 import cp, { exec } from 'child_process'
 import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
+import {MODE64, MODE64_ARG, MODE32, MODE32_ARG} from './constants.mjs'
 
 
 let ERR_NOT_FOUND
@@ -64,6 +65,9 @@ function promiseOnce(eventEmitter, event) {
 
 // Promise wrapper for child_process.spawn().
 var spawnProcess = async args => {
+	// Remove all null arguments
+	args = args.filter(arg => arg !== null)
+
 	var stdio = ['ignore', 'pipe', 'pipe']
 	var proc = cp.spawn('reg.exe', args, {stdio})
 
@@ -178,10 +182,20 @@ export function sanitizeType(type) {
 }
 
 export function getOptions(userOptions) {
-	var {lowercase, format} = Registry
-	var defaultOptions = {lowercase, format}
+	var {lowercase, format, mode} = Registry
+	var defaultOptions = {lowercase, format, mode}
 	if (userOptions)
 		return Object.assign(defaultOptions, userOptions)
 	else
 		return defaultOptions
+}
+
+export function modeToArg(mode) {
+	switch (mode) {
+		case MODE64: return MODE64_ARG
+		case MODE32: return MODE32_ARG
+		case 64    : return MODE64_ARG
+		case 32    : return MODE32_ARG
+	}
+	return null
 }

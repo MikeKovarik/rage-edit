@@ -46,6 +46,8 @@ Registry.lowercase = true
 // Can be 'simple', 'complex', (TODO) 'naive'
 Registry.format = 'simple'
 
+Registry.mode = 'none'
+
 Registry.FORMAT_NAIVE = 'naive'
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'
