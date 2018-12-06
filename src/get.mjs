@@ -25,22 +25,15 @@ Registry.get = function(path, arg2, options) {
 		return Registry.getValue(path, arg2, options)
 }
 
-
-Registry.has = function(path, name) {
-	if (name === undefined)
+Registry.has = function(path, arg2, options) {
+	var type = typeof arg2
+	if (type === 'undefined')
 		return Registry.hasKey(path)
+	else if (type === 'object')
+		return Registry.hasKey(path, arg2)
 	else
-		return Registry.hasValue(path, name)
+		return Registry.hasValue(path, arg2, options)
 }
-// Registry.has = function(path, arg2, options) {
-// 	var type = typeof arg2
-// 	if (type === 'object')
-// 		return Registry.hasKey(path, undefined, arg2)
-// 	else if (type === 'undefined')
-// 		return Registry.hasKey(path)
-// 	else
-// 		return Registry.hasValue(path, name, options)
-// }
 
 
 Registry.getKey = async function(path, recursive, options) {
