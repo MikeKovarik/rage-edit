@@ -200,7 +200,7 @@ Registry.set('HKLM\\Software\\Overwatch', 'Leader', 'Jack Morrison')
 Registry.set('HKLM\\Software\\Overwatch', 'Scientists', ['Angela Ziegler', 'Winston', 'Mei-Ling Zhou'])
 // Re/writes data of default value entry.
 Registry.set('HKLM\\Software\\Overwatch', '', 'This is data of the default value entry')
-// Creates a new subkey 'Blackwatch' inside 'HKLM\Software\Overwatch' and creates default value with data Mysterious branch of Overwatch'
+// Creates a new subkey 'Blackwatch' inside 'HKLM\Software\Overwatch' and creates default value with data 'Mysterious branch of Overwatch'
 Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', '', 'Mysterious branch of Overwatch')
 ```
 
