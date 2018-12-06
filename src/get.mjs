@@ -44,6 +44,7 @@ Registry.getKey = async function(path, recursive, options) {
 		options = recursive
 		recursive = false
 	}
+	// Populate options with default values
 	options = getOptions(options)
 	if (recursive)
 		var result = await execute(['query', path, '/s', modeToArg(options.mode)])
@@ -91,6 +92,7 @@ Registry.getKey = async function(path, recursive, options) {
 Registry.getValue = async function(path, name = Registry.DEFAULT, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
+	// Populate options with default values
 	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	if (name === Registry.DEFAULT)
@@ -117,6 +119,7 @@ Registry.getValue = async function(path, name = Registry.DEFAULT, options) {
 Registry.getKeys = async function(path, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
+	// Populate options with default values
 	options = getOptions(options)
 	// Create simple query at given path
 	var result = await execute(['query', path, modeToArg(options.mode)])
@@ -146,6 +149,7 @@ Registry.getKeys = async function(path, options) {
 Registry.getValues = async function(path, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
+	// Populate options with default values
 	options = getOptions(options)
 	// Create simple query at given path
 	var result = await execute(['query', path, modeToArg(options.mode)])
@@ -169,9 +173,10 @@ Registry.getValues = async function(path, options) {
 
 // Returns true if a key at the path exists
 Registry.hasKey = function(path, options) {
-	options = getOptions(options)
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
+	// Populate options with default values
+	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
 	return execute(['query', path, modeToArg(options.mode)])
@@ -181,9 +186,10 @@ Registry.hasKey = function(path, options) {
 
 // Returns true if a value at the path exists
 Registry.hasValue = async function(path, name = Registry.DEFAULT, options) {
-  options = getOptions(options)
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
+	// Populate options with default values
+  options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
 	if (name === Registry.DEFAULT)
