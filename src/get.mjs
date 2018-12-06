@@ -189,7 +189,7 @@ Registry.hasValue = async function(path, name = Registry.DEFAULT) {
 	if (result === undefined) return false
 	// Default value name is represented by a word default in brackets.
 	if (name === Registry.DEFAULT)
-		name = Registry.DEFAULT_VERBOSE
+		name = VALUE_DEFAULT
 	// Split the result into lines and try to find the searched one.
 	// NOTE: not needed to lowercase the result, REG always returns queried value name in the same caps.
 	return result
@@ -278,9 +278,9 @@ function processValueLine(line, options) {
 	// value line starts with 4 spaces and consists of three items that are also spaces by 4 spaces.
 	// WARNING: Do not trim. Lines only start with 4 spaces, they don't end with 4 spaces unsless the value is empty string.
 	var [name, type, data] = line.slice(4).split('    ')
-	if (name === Registry.DEFAULT_VERBOSE)
+	if (name === VALUE_DEFAULT)
 		name = Registry.DEFAULT
-	if (data === Registry.VALUENOTSET_VERBOSE)
+	if (data === VALUE_NOT_SET)
 		data = undefined
 	else if (options.lowercase)
 		name = name.toLowerCase()

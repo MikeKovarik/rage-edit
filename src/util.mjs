@@ -1,9 +1,12 @@
 import {Registry} from './Registry.mjs'
-import cp, { exec } from 'child_process'
+import cp from 'child_process'
 import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
 
 
 let ERR_NOT_FOUND
+export let VALUE_DEFAULT = undefined
+export let VALUE_NOT_SET = undefined
+
 let errMessagePromise
 let defaultValuesPromise
 
@@ -11,16 +14,15 @@ function getErrorLine(stderr) {
 	return stderr.trim().split('\r\n')[0]
 }
 
-function getDefaultValues(stdout) {
+function setDefaultValues(stdout) {
 	// indexOf() because it's fastest.
 	let iNextStr = stdout.indexOf('\r\n', 1)
 	let iNameBracketOpen  = stdout.indexOf('(', iNextStr)
 	let iNameBracketClose = stdout.indexOf(')', iNameBracketOpen)
 	let iValBracketOpen   = stdout.indexOf('(', iNameBracketClose)
 	let iValBracketClose  = stdout.indexOf(')', iValBracketOpen)
-	let defaultNameStr    = stdout.slice(iNameBracketOpen, iNameBracketClose+1)
-	let valueNotSetStr    = stdout.slice(iValBracketOpen, iValBracketClose+1)
-	return [defaultNameStr, valueNotSetStr]
+	VALUE_DEFAULT         = stdout.slice(iNameBracketOpen, iNameBracketClose+1)
+	VALUE_NOT_SET         = stdout.slice(iValBracketOpen, iValBracketClose+1)
 }
 
 // Method for calling the reg.exe commands.
@@ -32,21 +34,19 @@ execute = async args => {
 	// Ensure we get localized messages only once.
 
 	// ERR_NOT_FOUND message.
-	if (!errMessagePromise)
-		errMessagePromise = spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
-			.then(res => getErrorLine(res.stderr))
+	if (!errMessagePromise) {
+		errMessagePromise = spawn('reg.exe', ['QUERY', 'HKLM\\NONEXISTENT'])
+			.then(res => ERR_NOT_FOUND = getErrorLine(res.stderr))
+	}
 
 	// (Default) and (value not set) values.
-	if (!defaultValuesPromise)
-		defaultValuesPromise = spawnProcess(['QUERY', 'HKCR', '/ve'])
-			.then(res => getDefaultValues(res.stdout))
+	if (!defaultValuesPromise) {
+		defaultValuesPromise = spawn('reg.exe', ['QUERY', 'HKCR', '/ve'])
+			.then(res => setDefaultValues(res.stdout))
+	}
 
 	// Postpone all execute() calls until the localized messages are resolved. 
-	let [notFoundMsg, [defaultNameStr, valueNotSetStr]] = await Promise
-		.all([errMessagePromise, defaultValuesPromise])
-	ERR_NOT_FOUND = notFoundMsg
-	Registry.DEFAULT_VERBOSE = defaultNameStr
-	Registry.VALUENOTSET_VERBOSE = valueNotSetStr
+	await Promise.all([errMessagePromise, defaultValuesPromise])
 
 	// Replace this temporary function with actual execute().
 	execute = _execute
@@ -56,7 +56,7 @@ execute = async args => {
 
 // Actual execute() function.
 var _execute = async args => {
-	var {stdout, stderr} = await spawnProcess(args)
+	var {stdout, stderr} = await spawn('reg.exe', args)
 	// REG command has finished running, resolve result or throw error if any occured.
 	if (stderr.length === 0) return stdout
 	var line = getErrorLine(stderr)
@@ -71,9 +71,9 @@ function promiseOnce(eventEmitter, event) {
 }
 
 // Promise wrapper for child_process.spawn().
-var spawnProcess = async args => {
+var spawn = async (program, args) => {
 	var stdio = ['ignore', 'pipe', 'pipe']
-	var proc = cp.spawn('reg.exe', args, {stdio})
+	var proc = cp.spawn(program, args, {stdio})
 
 	var stdout = ''
 	var stderr = ''
@@ -93,11 +93,11 @@ var spawnProcess = async args => {
 		return {stdout, stderr}
 }
 
-// Replaces default spawnProcess() with custom means of spawning reg.exe.
+// Replaces default spawn('reg.exe', ) with custom means of spawning reg.exe.
 // For example allows to run the library in restricted environments.
-// Default spawnProcess() uses Node's child_process.spawn().
-export function _replaceProcessSpawner(externalHook) {
-	spawnProcess = externalHook
+// Default spawn('reg.exe', ) uses Node's child_process.spawn().
+export function _replaceSpawn(externalHook) {
+	spawn = externalHook
 }
 
 class RegError extends Error {

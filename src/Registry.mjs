@@ -37,8 +37,6 @@ export class Registry {
 
 Registry.VALUES = '$values'
 Registry.DEFAULT = ''
-Registry.DEFAULT_VERBOSE = null
-Registry.VALUENOTSET_VERBOSE = null
 
 // Only names and paths are affected, not the data
 Registry.lowercase = true
@@ -46,6 +44,5 @@ Registry.lowercase = true
 // Can be 'simple', 'complex', (TODO) 'naive'
 Registry.format = 'simple'
 
-Registry.FORMAT_NAIVE = 'naive'
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'
