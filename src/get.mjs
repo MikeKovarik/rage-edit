@@ -189,7 +189,7 @@ Registry.hasValue = async function(path, name = Registry.DEFAULT, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
 	// Populate options with default values
-  options = getOptions(options)
+	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
 	if (name === Registry.DEFAULT)
