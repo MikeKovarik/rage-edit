@@ -37,7 +37,8 @@ export class Registry {
 
 Registry.VALUES = '$values'
 Registry.DEFAULT = ''
-Registry.DEFAULT_VERBOSE = '(Default)'
+Registry.DEFAULT_VERBOSE = null
+Registry.VALUENOTSET_VERBOSE = null
 
 // Only names and paths are affected, not the data
 Registry.lowercase = true

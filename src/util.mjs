@@ -5,24 +5,52 @@ import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.m
 
 let ERR_NOT_FOUND
 let errMessagePromise
+let defaultValuesPromise
 
 function getErrorLine(stderr) {
 	return stderr.trim().split('\r\n')[0]
 }
 
+function getDefaultValues(stdout) {
+	// indexOf() because it's fastest.
+	let iNextStr = stdout.indexOf('\r\n', 1)
+	let iNameBracketOpen  = stdout.indexOf('(', iNextStr)
+	let iNameBracketClose = stdout.indexOf(')', iNameBracketOpen)
+	let iValBracketOpen   = stdout.indexOf('(', iNameBracketClose)
+	let iValBracketClose  = stdout.indexOf(')', iValBracketOpen)
+	let defaultNameStr    = stdout.slice(iNameBracketOpen, iNameBracketClose+1)
+	let valueNotSetStr    = stdout.slice(iValBracketOpen, iValBracketClose+1)
+	return [defaultNameStr, valueNotSetStr]
+}
+
 // Method for calling the reg.exe commands.
 export var execute
 
-// Temporary wrapper over execute() function that first gets the ERR_NOT_FOUND message
-// becase reg.exe is locale based. Only runs on the first (few) calls.
+// Temporary wrapper over execute() function that first gets localized values
+// because reg.exe is locale based. Only runs on the first (few) calls.
 execute = async args => {
-	// Ensure we get the error message only once.
+	// Ensure we get localized messages only once.
+
+	// ERR_NOT_FOUND message.
 	if (!errMessagePromise)
-		errMessagePromise = spawnProcess(['QUERY', 'HKLM\\NONEXISTENT']).then(res => getErrorLine(res.stderr))
-	// Postpone all execute() calls until the ERR_NOT_FOUND message is resolved. 
-	ERR_NOT_FOUND = await errMessagePromise
+		errMessagePromise = spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
+			.then(res => getErrorLine(res.stderr))
+
+	// (Default) and (value not set) values.
+	if (!defaultValuesPromise)
+		defaultValuesPromise = spawnProcess(['QUERY', 'HKCR', '/ve'])
+			.then(res => getDefaultValues(res.stdout))
+
+	// Postpone all execute() calls until the localized messages are resolved. 
+	let [notFoundMsg, [defaultNameStr, valueNotSetStr]] = await Promise
+		.all([errMessagePromise, defaultValuesPromise])
+	ERR_NOT_FOUND = notFoundMsg
+	Registry.DEFAULT_VERBOSE = defaultNameStr
+	Registry.VALUENOTSET_VERBOSE = valueNotSetStr
+
 	// Replace this temporary function with actual execute().
 	execute = _execute
+
 	return _execute(args)
 }
 
