@@ -11,6 +11,18 @@ function getErrorLine(stderr) {
 	return stderr.trim().split('\r\n')[0]
 }
 
+function getDefaultValues(stdout) {
+	// indexOf() because it's fastest.
+	let iNextStr = stdout.indexOf('\r\n', 1)
+	let iNameBracketOpen  = stdout.indexOf('(', iNextStr)
+	let iNameBracketClose = stdout.indexOf(')', iNameBracketOpen)
+	let iValBracketOpen   = stdout.indexOf('(', iNameBracketClose)
+	let iValBracketClose  = stdout.indexOf(')', iValBracketOpen)
+	let defaultNameStr    = stdout.slice(iNameBracketOpen, iNameBracketClose+1)
+	let valueNotSetStr    = stdout.slice(iValBracketOpen, iValBracketClose+1)
+	return [defaultNameStr, valueNotSetStr]
+}
+
 // Method for calling the reg.exe commands.
 export var execute
 
@@ -24,21 +36,17 @@ execute = async args => {
 		errMessagePromise = spawnProcess(['QUERY', 'HKLM\\NONEXISTENT'])
 			.then(res => getErrorLine(res.stderr))
 
-	// (Default) and (value not set) values
+	// (Default) and (value not set) values.
 	if (!defaultValuesPromise)
 		defaultValuesPromise = spawnProcess(['QUERY', 'HKCR', '/ve'])
-			.then(res => {
-				let regexp = /(\(.*?\)).*?(\(.*?\))/
-				let [match, defaultMsg, valueNotSetMsg] = regexp.exec(res.stdout)
-				return [defaultMsg, valueNotSetMsg]
-			})
+			.then(res => getDefaultValues(res.stdout))
 
 	// Postpone all execute() calls until the localized messages are resolved. 
-	let [notFoundMsg, [defaultMsg, valueNotSetMsg]] = await Promise
-	  .all([errMessagePromise, defaultValuesPromise])
+	let [notFoundMsg, [defaultNameStr, valueNotSetStr]] = await Promise
+		.all([errMessagePromise, defaultValuesPromise])
 	ERR_NOT_FOUND = notFoundMsg
-	Registry.DEFAULT_VERBOSE = defaultMsg
-	Registry.VALUENOTSET_VERBOSE = valueNotSetMsg
+	Registry.DEFAULT_VERBOSE = defaultNameStr
+	Registry.VALUENOTSET_VERBOSE = valueNotSetStr
 
 	// Replace this temporary function with actual execute().
 	execute = _execute
