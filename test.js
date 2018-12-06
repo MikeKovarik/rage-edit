@@ -17,14 +17,15 @@ assert.willNotThrow = async promise => {
 	assert.isNotError(await promise.catch(err => err), 'expected to not throw')
 }
 
-const isNode64bit = (process.arch == 'x64')
+const isNode64bit    = (process.arch == 'x64')
+const isNode64bitMsg = 'this test can be passed on x64 node.js only'
 
-const PATH = 'HKLM\\SOFTWARE\\MikeKovarik'
-const PATH_32BIT = 'HKLM\\SOFTWARE\\WOW6432Node\\MikeKovarik'
+const PATH             = 'HKLM\\SOFTWARE\\MikeKovarik'
+const PATH_32BIT       = 'HKLM\\SOFTWARE\\WOW6432Node\\MikeKovarik'
 const PATH_NONEXISTENT = 'HKCR\\Some\\made\\up\\path\\that\\doesnt\\exist'
-const PATH_BLOCK = 'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Blocked'
-const OW_PATH = 'HKLM\\SOFTWARE\\Overwatch'
-const BW_PATH = 'HKLM\\SOFTWARE\\Overwatch\\Blackwatch'
+const PATH_BLOCK       = 'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Blocked'
+const OW_PATH          = 'HKLM\\SOFTWARE\\Overwatch'
+const BW_PATH          = 'HKLM\\SOFTWARE\\Overwatch\\Blackwatch'
 
 function noop() {}
 var resolveError = err => err
@@ -83,7 +84,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 
@@ -97,7 +98,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns same values for 32bit mode and WOW6432Node key', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
@@ -196,7 +197,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
@@ -210,7 +211,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns same values for 32bit mode and WOW6432Node key', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
@@ -300,7 +301,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
@@ -311,7 +312,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns same values for 32bit mode and WOW6432Node key', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
  
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
@@ -415,7 +416,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
@@ -429,7 +430,7 @@ describe('Registry static', () => {
 		})
 
 		it('returns same values for 32bit mode and WOW6432Node key', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
@@ -564,7 +565,7 @@ describe('Registry static', () => {
 		})
 
 		it('works using 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
@@ -595,7 +596,7 @@ describe('Registry static', () => {
 		})
 		
 		it('checks different keys in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
@@ -629,7 +630,7 @@ describe('Registry static', () => {
 		})
 
 		it('checks different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
@@ -671,7 +672,7 @@ describe('Registry static', () => {
 		})
 
 		it('checks different keys in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
@@ -688,7 +689,7 @@ describe('Registry static', () => {
 		})
 
 		it('checks different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
@@ -729,7 +730,7 @@ describe('Registry static', () => {
 		})
 
 		it('deletes different keys in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.setKey(PATH)
 			await Registry.setKey(PATH_32BIT)
@@ -776,7 +777,7 @@ describe('Registry static', () => {
 		})
 
 		it('deletes different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			const NAME = 'deleteme'
 
@@ -821,7 +822,7 @@ describe('Registry static', () => {
 		})
 
 		it('deletes different keys in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.setKey(PATH)
 			await Registry.setKey(PATH_32BIT)
@@ -880,7 +881,7 @@ describe('Registry static', () => {
 		})
 
 		it('creates different keys in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
@@ -952,7 +953,7 @@ describe('Registry static', () => {
 		})
 
 		it('creates different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
@@ -1155,7 +1156,7 @@ describe('Registry static', () => {
 		})
 
 		it('creates different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, 'this test can be passed on x64 node.js only')
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
