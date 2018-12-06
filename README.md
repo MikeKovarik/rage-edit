@@ -165,7 +165,7 @@ Registry.delete('HKLM\\Software\\Overwatch')
 
 
 
-### `.set(path[, name[, data[, type]]])`
+### `.set(path[, name[, data[, type][, options]]])`
 
 Creates or rewrites a key or `name`d value inside a key at the given `path`.
 
@@ -178,6 +178,7 @@ Creating new keys also creates an empty default value inside it (that's how wind
 - `[name]` of the value to create or modify. Optional. To modify the key's default value (empty string) use `''`.
 - `[data]` to store in the value entry. Optional.
 - `[type]` of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
+- `[options]` is object that allows to set 32/64 bit mode. Optional.
 
 |JS type|Registry type|
 |-|-|
