@@ -961,8 +961,8 @@ describe('Registry static', () => {
 			await Registry.setValue(PATH, 'regMode', 'reg64bit', {mode: '64bit'})
 			await Registry.setValue(PATH, 'regMode', 'reg32bit', {mode: '32bit'})
 
-			assert.equal(await Registry.getValue(PATH, 'regMode', 'reg64bit'))
-			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode', 'reg32bit'))
+			assert.equal(await Registry.getValue(PATH, 'regMode'), 'reg64bit')
+			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode'), 'reg32bit')
 		})
 
 
@@ -1164,8 +1164,8 @@ describe('Registry static', () => {
 			await Registry.set(PATH, 'regMode', 'reg64bit', {mode: '64bit'})
 			await Registry.set(PATH, 'regMode', 'reg32bit', {mode: '32bit'})
 
-			assert.equal(await Registry.getValue(PATH, 'regMode', 'reg64bit'))
-			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode', 'reg32bit'))
+			assert.equal(await Registry.getValue(PATH, 'regMode'), 'reg64bit')
+			assert.equal(await Registry.getValue(PATH_32BIT, 'regMode'), 'reg32bit')
 		})
 
 
