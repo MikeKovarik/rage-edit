@@ -20,7 +20,7 @@ Registry.set = function(path, arg2, ...args) {
 	else if (arg2 === false || arg2 === null)
 		return Registry.setKey(path, args[0])
 	else
-		return Registry.setValue(path, ...args)
+		return Registry.setValue(path, arg2, ...args)
 }
 
 
@@ -40,8 +40,6 @@ Registry.setKey = async function(path, options) {
 Registry.setValue = async function(path, name, data, type, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
-	// Populate options with default values
-	options = getOptions(options)
 	// 'name' argument can only be string, otherwise it's and object of values and possible nested subkeys.
 	if (typeof name !== 'string') {
 		data = name
@@ -52,6 +50,8 @@ Registry.setValue = async function(path, name, data, type, options) {
 		options = type
 		type = undefined
 	}
+	// Populate options with default values
+	options = getOptions(options)
 	// Arguments: path, name[, data[, type][, options]]]
 	return _setValue(path, name, data, type, options)
 }
@@ -60,7 +60,7 @@ async function _setValue(path, name, data = '', type, options) {
 		if (name)
 			path += `\\${name}`
 		var promises = Object.keys(data)
-			.map(name => _setValue(path, name, data[name]))
+			.map(name => _setValue(path, name, data[name], undefined, options))
 		return Promise.all(promises)
 	}
 	// Uppercase and make sure the type starts with REG_
