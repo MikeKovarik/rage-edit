@@ -308,7 +308,7 @@ describe('Registry static', () => {
 			var value64 = await Registry.getValue(path, 'path', {mode: '64bit'})
 			var value32 = await Registry.getValue(path, 'path', {mode: '32bit'})
 
-			assert.notEqual(value64.path, value32.path)
+			assert.notEqual(value64, value32)
 		})
 
 		it('returns same values for 32bit mode and WOW6432Node key', async () => {
