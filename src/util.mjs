@@ -36,7 +36,7 @@ execute = async args => {
 
 	// Postpone all execute() calls until the localized messages are resolved. 
 	let [notFoundMsg, [defaultMsg, valueNotSetMsg]] = await Promise
-	  .all([errMessagePromise, defaultValuesPromise])
+		.all([errMessagePromise, defaultValuesPromise])
 	ERR_NOT_FOUND = notFoundMsg
 	Registry.DEFAULT_VERBOSE = defaultMsg
 	Registry.VALUENOTSET_VERBOSE = valueNotSetMsg
