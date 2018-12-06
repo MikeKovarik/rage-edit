@@ -11,9 +11,14 @@ Registry.prototype.set = function(...args) {
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.set = function(path, ...args) {
-	if (args.length === 0)
+Registry.set = function(path, arg2, ...args) {
+	// Nothing but path is passed
+	if (arg2 === undefined)
 		return Registry.setKey(path)
+	// If second argument is null or false, pass the third one to 'setKey'
+	//   (it's probably an options object)
+	else if (arg2 === false || arg2 === null)
+		return Registry.setKey(path, args[0])
 	else
 		return Registry.setValue(path, ...args)
 }
