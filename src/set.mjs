@@ -33,6 +33,8 @@ Registry.setKey = async function(path, options) {
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(['add', path, '/f', modeToArg(options.mode)])
+	// 'reg.exe add' always creates/overrides '(default)' item with empty string (not undefined value). This command makes '(default)' undefined.
+	await execute(['delete', path, '/ve', '/f', modeToArg(options.mode)])
 }
 
 
