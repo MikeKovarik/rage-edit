@@ -88,8 +88,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 
-			var keys64 = await Registry.getKeys(path, {mode: '64bit'})
-			var keys32 = await Registry.getKeys(path, {mode: '32bit'})
+			var keys64 = await Registry.getKeys(path, {bits: 64})
+			var keys32 = await Registry.getKeys(path, {bits: 32})
 
 			assert.isNotEmpty(keys64)
 			assert.isNotEmpty(keys32)
@@ -103,7 +103,7 @@ describe('Registry static', () => {
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 
-			var keys32 = await Registry.getKeys(path, {mode: '32bit'})
+			var keys32 = await Registry.getKeys(path, {bits: 32})
 			var keysWow = await Registry.getKeys(pathWow)
 
 			assert.isNotEmpty(keys32)
@@ -201,8 +201,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var values64 = await Registry.getValues(path, {mode: '64bit'})
-			var values32 = await Registry.getValues(path, {mode: '32bit'})
+			var values64 = await Registry.getValues(path, {bits: 64})
+			var values32 = await Registry.getValues(path, {bits: 32})
 
 			assert.isNotEmpty(values64)
 			assert.isNotEmpty(values32)
@@ -217,7 +217,7 @@ describe('Registry static', () => {
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
 
 			var valuesWow = await Registry.getValues(pathWow)
-			var values32 = await Registry.getValues(path, {mode: '32bit'})
+			var values32 = await Registry.getValues(path, {bits: 32})
 
 			assert.isNotEmpty(valuesWow)
 			assert.isNotEmpty(values32)
@@ -305,8 +305,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var value64 = await Registry.getValue(path, 'path', {mode: '64bit'})
-			var value32 = await Registry.getValue(path, 'path', {mode: '32bit'})
+			var value64 = await Registry.getValue(path, 'path', {bits: 64})
+			var value32 = await Registry.getValue(path, 'path', {bits: 32})
 
 			assert.notEqual(value64, value32)
 		})
@@ -318,7 +318,7 @@ describe('Registry static', () => {
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
 
 			var valueWow = await Registry.getValue(pathWow, 'path')
-			var value32 = await Registry.getValue(path, 'path', {mode: '32bit'})
+			var value32 = await Registry.getValue(path, 'path', {bits: 32})
 
 			assert.equal(valueWow, value32)
 		})
@@ -420,8 +420,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var key64 = await Registry.getKey(path, {mode: '64bit'})
-			var key32 = await Registry.getKey(path, {mode: '32bit'})
+			var key64 = await Registry.getKey(path, {bits: 64})
+			var key32 = await Registry.getKey(path, {bits: 32})
 
 			assert.isNotEmpty(key64)
 			assert.isNotEmpty(key32)
@@ -436,7 +436,7 @@ describe('Registry static', () => {
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
 
 			var keyWow = await Registry.getKey(pathWow)
-			var key32 = await Registry.getKey(path, {mode: '32bit'})
+			var key32 = await Registry.getKey(path, {bits: 32})
 
 			assert.isNotEmpty(keyWow)
 			assert.isNotEmpty(key32)
@@ -466,7 +466,7 @@ describe('Registry static', () => {
 
 			it('empty default value does show up in $values', async () => {
 				await Registry.delete(OW_PATH)
-				await Registry.set(OW_PATH)
+				await Registry.set(OW_PATH, '')
 				var result = await Registry.getKey(OW_PATH)
 				assert.isNotEmpty(Object.keys(result.$values))
 				assert.isTrue(Object.keys(result.$values).includes(''))
@@ -474,7 +474,6 @@ describe('Registry static', () => {
 			it('undefined default value does not show up in $values', async () => {
 				await Registry.delete(OW_PATH)
 				await Registry.set(OW_PATH)
-				await Registry.delete(OW_PATH, '')
 				var result = await Registry.getKey(OW_PATH)
 				assert.isEmpty(Object.keys(result.$values))
 			})
@@ -514,7 +513,7 @@ describe('Registry static', () => {
 
 			it('empty default value does show up in $values', async () => {
 				await Registry.delete(OW_PATH)
-				await Registry.set(OW_PATH)
+				await Registry.set(OW_PATH, '')
 				var result = await Registry.getKey(OW_PATH, {format: 'complex'})
 				assert.isNotEmpty(result.values)
 				assert.isTrue(result.values[0].name === '')
@@ -522,7 +521,6 @@ describe('Registry static', () => {
 			it('undefined default value does not show up in $values', async () => {
 				await Registry.delete(OW_PATH)
 				await Registry.set(OW_PATH)
-				await Registry.delete(OW_PATH, '')
 				var result = await Registry.getKey(OW_PATH, {format: 'complex'})
 				assert.isEmpty(result.values)
 			})
@@ -569,8 +567,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var value64 = await Registry.get(path, 'path', {mode: '64bit'})
-			var value32 = await Registry.get(path, 'path', {mode: '32bit'})
+			var value64 = await Registry.get(path, 'path', {bits: 64})
+			var value32 = await Registry.get(path, 'path', {bits: 32})
 
 			assert.isNotEmpty(value64)
 			assert.isNotEmpty(value32)
@@ -602,14 +600,14 @@ describe('Registry static', () => {
 			await Registry.delete(PATH_32BIT)
 			await Registry.setKey(PATH)
 
-			assert.isTrue(await Registry.hasKey(PATH, {mode: '64bit'}))
-			assert.isFalse(await Registry.hasKey(PATH, {mode: '32bit'}))
+			assert.isTrue(await Registry.hasKey(PATH, {bits: 64}))
+			assert.isFalse(await Registry.hasKey(PATH, {bits: 32}))
 
 			await Registry.delete(PATH)
 			await Registry.setKey(PATH_32BIT)
 
-			assert.isFalse(await Registry.hasKey(PATH, {mode: '64bit'}))
-			assert.isTrue(await Registry.hasKey(PATH, {mode: '32bit'}))
+			assert.isFalse(await Registry.hasKey(PATH, {bits: 64}))
+			assert.isTrue(await Registry.hasKey(PATH, {bits: 32}))
 		})
 
 	})
@@ -638,11 +636,11 @@ describe('Registry static', () => {
 			await Registry.setValue(PATH, value64, 'yes', 'REG_SZ')
 			await Registry.setValue(PATH_32BIT, value32, 'yes', 'REG_SZ')
 
-			assert.isTrue(await Registry.hasValue(PATH, value64, {mode: '64bit'}))
-			assert.isTrue(await Registry.hasValue(PATH, value32, {mode: '32bit'}))
+			assert.isTrue(await Registry.hasValue(PATH, value64, {bits: 64}))
+			assert.isTrue(await Registry.hasValue(PATH, value32, {bits: 32}))
 			
-			assert.isFalse(await Registry.hasValue(PATH, value64, {mode: '32bit'}))
-			assert.isFalse(await Registry.hasValue(PATH, value32, {mode: '64bit'}))
+			assert.isFalse(await Registry.hasValue(PATH, value64, {bits: 32}))
+			assert.isFalse(await Registry.hasValue(PATH, value32, {bits: 64}))
 		})
 
 	})
@@ -678,12 +676,12 @@ describe('Registry static', () => {
 			var SUBPATH_32BIT = `${PATH_32BIT}\\Testing .has ${UID}`
 
 			await Registry.setKey(SUBPATH_32BIT)
-			assert.isFalse(await Registry.has(SUBPATH, {mode: '64bit'}))
-			assert.isTrue(await Registry.has(SUBPATH, {mode: '32bit'}))
+			assert.isFalse(await Registry.has(SUBPATH, {bits: 64}))
+			assert.isTrue(await Registry.has(SUBPATH, {bits: 32}))
 
 			await Registry.setKey(SUBPATH)
 
-			assert.isTrue(await Registry.has(SUBPATH, {mode: '64bit'}))
+			assert.isTrue(await Registry.has(SUBPATH, {bits: 64}))
 		})
 
 		it('checks different values in 64bit and 32bit modes', async () => {
@@ -695,11 +693,11 @@ describe('Registry static', () => {
 			await Registry.setValue(PATH, value64, 'yes', 'REG_SZ')
 			await Registry.setValue(PATH_32BIT, value32, 'yes', 'REG_SZ')
 
-			assert.isTrue(await Registry.has(PATH, value64, {mode: '64bit'}))
-			assert.isFalse(await Registry.has(PATH, value32, {mode: '64bit'}))
+			assert.isTrue(await Registry.has(PATH, value64, {bits: 64}))
+			assert.isFalse(await Registry.has(PATH, value32, {bits: 64}))
 
-			assert.isTrue(await Registry.has(PATH, value32, {mode: '32bit'}))
-			assert.isFalse(await Registry.has(PATH, value64, {mode: '32bit'}))
+			assert.isTrue(await Registry.has(PATH, value32, {bits: 32}))
+			assert.isFalse(await Registry.has(PATH, value64, {bits: 32}))
 		})
 
 	})
@@ -731,13 +729,13 @@ describe('Registry static', () => {
 
 			await Registry.setKey(PATH)
 			await Registry.setKey(PATH_32BIT)
-			await Registry.deleteKey(PATH, {mode: '64bit'})
+			await Registry.deleteKey(PATH, {bits: 64})
 
 			assert.isFalse(await Registry.hasKey(PATH))
 			assert.isTrue(await Registry.hasKey(PATH_32BIT))
 
 			await Registry.setKey(PATH)
-			await Registry.deleteKey(PATH, {mode: '32bit'})
+			await Registry.deleteKey(PATH, {bits: 32})
 
 			assert.isTrue(await Registry.hasKey(PATH))
 			assert.isFalse(await Registry.hasKey(PATH_32BIT))
@@ -780,13 +778,13 @@ describe('Registry static', () => {
 
 			await Registry.set(PATH, NAME)
 			await Registry.set(PATH_32BIT, NAME)
-			await Registry.deleteValue(PATH, NAME, {mode: '64bit'})
+			await Registry.deleteValue(PATH, NAME, {bits: 64})
 
 			assert.isFalse(await Registry.hasValue(PATH, NAME))
 			assert.isTrue(await Registry.hasValue(PATH_32BIT, NAME))
 
 			await Registry.set(PATH, NAME)
-			await Registry.deleteValue(PATH, NAME, {mode: '32bit'})
+			await Registry.deleteValue(PATH, NAME, {bits: 32})
 
 			assert.isTrue(await Registry.hasValue(PATH, NAME))
 			assert.isFalse(await Registry.hasValue(PATH_32BIT, NAME))
@@ -823,13 +821,13 @@ describe('Registry static', () => {
 
 			await Registry.setKey(PATH)
 			await Registry.setKey(PATH_32BIT)
-			await Registry.delete(PATH, {mode: '64bit'})
+			await Registry.delete(PATH, {bits: 64})
 
 			assert.isFalse(await Registry.hasKey(PATH))
 			assert.isTrue(await Registry.hasKey(PATH_32BIT))
 
 			await Registry.setKey(PATH)
-			await Registry.delete(PATH, {mode: '32bit'})
+			await Registry.delete(PATH, {bits: 32})
 
 			assert.isTrue(await Registry.hasKey(PATH))
 			assert.isFalse(await Registry.hasKey(PATH_32BIT))
@@ -841,13 +839,13 @@ describe('Registry static', () => {
 
 			await Registry.set(PATH, NAME)
 			await Registry.set(PATH_32BIT, NAME)
-			await Registry.delete(PATH, NAME, {mode: '64bit'})
+			await Registry.delete(PATH, NAME, {bits: 64})
 
 			assert.isFalse(await Registry.hasValue(PATH, NAME))
 			assert.isTrue(await Registry.hasValue(PATH_32BIT, NAME))
 
 			await Registry.set(PATH, NAME)
-			await Registry.delete(PATH, NAME, {mode: '32bit'})
+			await Registry.delete(PATH, NAME, {bits: 32})
 
 			assert.isTrue(await Registry.hasValue(PATH, NAME))
 			assert.isFalse(await Registry.hasValue(PATH_32BIT, NAME))
@@ -883,14 +881,14 @@ describe('Registry static', () => {
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
 
-			await Registry.setKey(PATH, {mode: '64bit'})
+			await Registry.setKey(PATH, {bits: 64})
 
 			assert.isTrue(await Registry.hasKey(PATH))
 			assert.isFalse(await Registry.hasKey(PATH_32BIT))
 
 			await Registry.delete(PATH)
 
-			await Registry.setKey(PATH, {mode: '32bit'})
+			await Registry.setKey(PATH, {bits: 32})
 
 			assert.isFalse(await Registry.hasKey(PATH))
 			assert.isTrue(await Registry.hasKey(PATH_32BIT))
@@ -955,8 +953,8 @@ describe('Registry static', () => {
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
 
-			await Registry.setValue(PATH, 'reg-mode', 'reg64bit', 'REG_SZ', {mode: '64bit'})
-			await Registry.setValue(PATH, 'reg-mode', 'reg32bit', 'REG_SZ', {mode: '32bit'})
+			await Registry.setValue(PATH, 'reg-mode', 'reg64bit', 'REG_SZ', {bits: 64})
+			await Registry.setValue(PATH, 'reg-mode', 'reg32bit', 'REG_SZ', {bits: 32})
 
 			assert.equal(await Registry.getValue(PATH, 'reg-mode'), 'reg64bit')
 			assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
@@ -964,14 +962,14 @@ describe('Registry static', () => {
 
 		it(`'options' don't conflict with 'type'`, async () => {
 			await Registry.setValue(PATH_32BIT, 'value-entry-1', 123, 'REG_DWORD')
-			await Registry.setValue(PATH, 'value-entry-2', 123, {mode: '64bit'})
-			await Registry.setValue(PATH, 'value-entry-3', 123, {mode: '32bit'})
-			await Registry.setValue(PATH, 'value-entry-4', 123, 'REG_DWORD', {mode: '32bit'})
+			await Registry.setValue(PATH, 'value-entry-2', 123, {bits: 64})
+			await Registry.setValue(PATH, 'value-entry-3', 123, {bits: 32})
+			await Registry.setValue(PATH, 'value-entry-4', 123, 'REG_DWORD', {bits: 32})
 
-			var val1 = await Registry.getValue(PATH, 'value-entry-1', {mode: '32bit'})
-			var val2 = await Registry.getValue(PATH, 'value-entry-2', {mode: '64bit'})
-			var val3 = await Registry.getValue(PATH, 'value-entry-3', {mode: '32bit'})
-			var val4 = await Registry.getValue(PATH, 'value-entry-4', {mode: '32bit'})
+			var val1 = await Registry.getValue(PATH, 'value-entry-1', {bits: 32})
+			var val2 = await Registry.getValue(PATH, 'value-entry-2', {bits: 64})
+			var val3 = await Registry.getValue(PATH, 'value-entry-3', {bits: 32})
+			var val4 = await Registry.getValue(PATH, 'value-entry-4', {bits: 32})
 
 			assert.equal(val1, 123)
 			assert.equal(val1, val2)
@@ -1177,8 +1175,8 @@ describe('Registry static', () => {
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
 
-			await Registry.set(PATH, 'reg-mode', 'reg64bit', {mode: '64bit'})
-			await Registry.set(PATH, 'reg-mode', 'reg32bit', {mode: '32bit'})
+			await Registry.set(PATH, 'reg-mode', 'reg64bit', {bits: 64})
+			await Registry.set(PATH, 'reg-mode', 'reg32bit', {bits: 32})
 
 			assert.equal(await Registry.getValue(PATH, 'reg-mode'), 'reg64bit')
 			assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
@@ -1261,10 +1259,10 @@ describe('Registry static', () => {
 			after(() => Registry.deleteKey(PATH2))
 		}
 
-		describe(`new key creation also creates default value with empty string data`, () => {
+		describe(`new key creation also creates default value with undefined data`, () => {
 			createBeforeAndAfter()
 			it('.getValue returns undefined', async () => {
-				assert.equal(await Registry.getValue(PATH2, ''), '')
+				assert.equal(await Registry.getValue(PATH2, ''), undefined)
 			})
 			it('.hasValue does not throw', async () => {
 				assert.isTrue(await Registry.hasValue(PATH2, ''))
@@ -1323,7 +1321,7 @@ describe('Registry static', () => {
 
 		after(() => {
 			Registry.format = 'simple'
-			Registry.mode = 'none'
+			Registry.bits = undefined
 		})
 
 		it(`Registry.format = 'complex' is used for all calls`, async () => {
@@ -1340,7 +1338,7 @@ describe('Registry static', () => {
 			assert.isObject(await Registry.getValues('HKCR\\*', {format: 'simple'}))
 		})
 
-		// TODO: Registry.mode = '32bit'
+		// TODO: Registry.bits = 32
 
 	})
 
@@ -1560,15 +1558,15 @@ describe('new Registry', () => {
 	// 		await Registry.delete(PATH)
 	// 		await Registry.delete(PATH_32BIT)
 	//
-	// 		var reg64 = new Registry(PATH, {mode: '64bit'})
-	// 		var reg32 = new Registry(PATH, {mode: '32bit'})
+	// 		var reg64 = new Registry(PATH, {bits: 64})
+	// 		var reg32 = new Registry(PATH, {bits: 32})
 	//
 	// 		await reg64.set('reg-mode', 'reg64bit')
 	// 		await reg32.set('reg-mode', 'reg32bit')
 	//
 	// 		assert.equal(await reg64.get('reg-mode'), 'reg64bit')
 	// 		assert.equal(await reg32.get('reg-mode'), 'reg32bit')
-	// 		assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode', {mode: '64bit'}), 'reg32bit')
+	// 		assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode', {bits: 64}), 'reg32bit')
 	// 	})
 	//
 	// })
