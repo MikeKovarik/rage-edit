@@ -50,7 +50,7 @@ export class Registry {
 		this.unicode = true
 	}
 
- 	static async disableUnicode() {
+	static async disableUnicode() {
 		if (!this.unicode) return
 		await this.setCodePage(this.lastCodePage)
 		this.lastCodePage = undefined
