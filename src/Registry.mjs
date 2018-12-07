@@ -1,5 +1,5 @@
 import {HIVES, shortenHive, extendHive} from './constants.mjs'
-import {sanitizePath} from './util.mjs'
+import {sanitizePath, spawn} from './util.mjs'
 
 
 // Collection of static methods for interacting with any key in windows registry.
@@ -33,12 +33,38 @@ export class Registry {
 		return args
 	}
 
+	static async setCodePage(encoding) {
+		try {
+			await spawn('cmd.exe', ['/c', 'chcp', encoding])
+		} catch (e) {
+			throw new Error(`Invalid code page: ${encoding}`)
+		}
+	}
+
+	static async enableUnicode() {
+		if (this.unicode) return
+		var {stdout} = await spawn('cmd.exe', ['/c', 'chcp'])
+		var cp = Number(stdout.split(':')[1])
+		if (Number.isNaN(cp)) throw new Error(`Can't get current code page`)
+		this.lastCodePage = cp
+		this.unicode = true
+	}
+
+ 	static async disableUnicode() {
+		if (!this.unicode) return
+		await this.setCodePage(this.lastCodePage)
+		this.lastCodePage = undefined
+		this.unicode = false
+	}
+
 }
+
 
 Registry.VALUES = '$values'
 Registry.DEFAULT = ''
-Registry.DEFAULT_VERBOSE = null
-Registry.VALUENOTSET_VERBOSE = null
+
+Registry.unicode = false
+Registry.lastCodePage
 
 // Only names and paths are affected, not the data
 Registry.lowercase = true
@@ -48,6 +74,5 @@ Registry.format = 'simple'
 // By default mode depends on node.js arch
 Registry.mode = 'none'
 
-Registry.FORMAT_NAIVE = 'naive'
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'
