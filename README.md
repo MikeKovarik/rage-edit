@@ -165,7 +165,7 @@ Registry.delete('HKLM\\Software\\Overwatch')
 
 
 
-### `.set(path[, name[, data[, type]]])`
+### `.set(path[, name[, data[, type][, options]]])`
 
 Creates or rewrites a key or `name`d value inside a key at the given `path`.
 
@@ -178,6 +178,7 @@ Creating new keys also creates an empty default value inside it (that's how wind
 - `[name]` of the value to create or modify. Optional. To modify the key's default value (empty string) use `''`.
 - `[data]` to store in the value entry. Optional.
 - `[type]` of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
+- `[options]` is object that allows to set 32/64 bit mode. Optional.
 
 |JS type|Registry type|
 |-|-|
@@ -202,6 +203,12 @@ Registry.set('HKLM\\Software\\Overwatch', 'Scientists', ['Angela Ziegler', 'Wins
 Registry.set('HKLM\\Software\\Overwatch', '', 'This is data of the default value entry')
 // Creates a new subkey 'Blackwatch' inside 'HKLM\Software\Overwatch' and creates default value with data 'Mysterious branch of Overwatch'
 Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', '', 'Mysterious branch of Overwatch')
+
+// The same as above but forces 32 bit mode so the entry 'Leader' will be created inside the key 'HKLM\Software\Wow6432Node\Overwatch'
+Registry.set('HKLM\\Software\\Overwatch', 'Leader', 'Jack Morrison', {mode: '32bit'})
+
+// Forces 64 bit mode. If code is running from 32 bit node.js, '64bit' mode prevents windows from auto redirecting to 'HKLM\Software\Wow6432Node\Overwatch' 
+Registry.set('HKLM\\Software\\Overwatch', 'Leader', 'Jack Morrison', {mode: '64bit'})
 ```
 
 
@@ -220,8 +227,16 @@ Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', '', 'Mysterious branch of 
 
 ## Constructor, instance mode
 
-### `new Registry(path)`
+### `new Registry(path[, options])`
 
+#### Parameters:
+- `[path]` to a key.
+- `[options]` is object with options (currently supports only [mode](#Registry mode) option). Optional.
+
+#### Returns:
+`Registry`
+
+#### Example
 ```js
 var reg = new Registry('HKLM\\Software\\Overwatch')
 reg.get('Scientists')
@@ -349,7 +364,7 @@ It can be set as a global default for all method calls, or specified manually in
 // change format globally
 Registry.format = 'complex'
 // or individually
-Registry.get('HKCR\\Directory\\shell', {format: 'complex'}
+Registry.get('HKCR\\Directory\\shell', {format: 'complex'})
 ```
 
 
@@ -431,7 +446,44 @@ var software = await Registry.get('HKLM\\software', true, {format: 'complex'})
 software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].keys.feedmanager.values['']
 ```
 
+## Registry mode
+When accessing registry from 64b node.js, it's possible to get access to 32b registry area:
 
+* 64b node.js => 64b registry: `HKLM\SOFTWARE\...`
+* 64b node.js => 32b registry: `HKLM\SOFTWARE\WOW6432Node\...`
+
+But 32b applications automatically get redirected all calls to `WOW6432Node` subkeys so both `HKLM\SOFTWARE\...` and `HKLM\SOFTWARE\WOW6432Node\...` point to same keys.
+
+To bypass that behavior, it's possible to set `mode` to `64bit` or `32bit` for each method to get access to particular registry area without dealing with `WOW6432Nodes`.
+
+Example:
+```js
+// Helper function: gets `$values.displayname` of each key and returns them as a string
+function showAppNames(key) {
+  return Object.keys(key)
+    .map(id => key[id].$values ? key[id].$values.displayname : null)
+    .filter(name => name)
+    .join(';\n')
+}
+
+// Without {mode}, works in 64b node.js only
+const path64 = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+const path32 = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+var apps64 = await Registry.get(path64, true)
+var apps32 = await Registry.get(path32, true)
+
+console.log(' # Installed 64b apps:\n', showAppNames(apps64))
+console.log(' # Installed 32b apps:\n', showAppNames(apps32))
+
+
+// With {mode}, doesn't depend on node.js' architecture
+const path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+var apps64 = await Registry.get(path, true, {mode: '64bit'})
+var apps32 = await Registry.get(path, true, {mode: '32bit'})
+
+console.log(' # Installed 64b apps:\n', showAppNames(apps64))
+console.log(' # Installed 32b apps:\n', showAppNames(apps32))
+```
 
 # Caveats, edge cases & the weirdness of Windows registry
 

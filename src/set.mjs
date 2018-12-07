@@ -1,4 +1,4 @@
-import {execute, sanitizePath, inferAndStringifyData, sanitizeType} from './util.mjs'
+import {execute, sanitizePath, getOptions, inferAndStringifyData, sanitizeType, modeToArg} from './util.mjs'
 import {TYPES} from './constants.mjs'
 import {Registry} from './Registry.mjs'
 
@@ -11,28 +11,35 @@ Registry.prototype.set = function(...args) {
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.set = function(path, ...args) {
-	if (args.length === 0)
+Registry.set = function(path, arg2, ...args) {
+	// Nothing but path is passed
+	if (arg2 === undefined)
 		return Registry.setKey(path)
+	// If second argument is null or false, pass the third one to 'setKey'
+	//   (it's probably an options object)
+	else if (arg2 === false || arg2 === null)
+		return Registry.setKey(path, args[0])
 	else
-		return Registry.setValue(path, ...args)
+		return Registry.setValue(path, arg2, ...args)
 }
 
 
 // Creates a key at given path.  Does nothing if the key already exists.
-Registry.setKey = async function(path) {
+Registry.setKey = async function(path, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
+	// Populate options with default values
+	options = getOptions(options)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
-	await execute(['add', path, '/f'])
+	await execute(['add', path, '/f', modeToArg(options.mode)])
 	// 'reg.exe add' always creates/overrides '(default)' item with empty string (not undefined value). This command makes '(default)' undefined.
-	await execute(['delete', path, '/ve', '/f'])
+	await execute(['delete', path, '/ve', '/f', modeToArg(options.mode)])
 }
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.setValue = async function(path, name, data, type) {
+Registry.setValue = async function(path, name, data, type, options) {
 	// Allow both forwardslashes and backslashes
 	path = sanitizePath(path)
 	// 'name' argument can only be string, otherwise it's and object of values and possible nested subkeys.
@@ -40,15 +47,22 @@ Registry.setValue = async function(path, name, data, type) {
 		data = name
 		name = undefined
 	}
-	// Arguments: path, name[, data[, type]]
-	return _setValue(path, name, data, type)
+	// 'type' argument can only be string, otherwise it's a settings object.
+	if (typeof type !== 'string') {
+		options = type
+		type = undefined
+	}
+	// Populate options with default values
+	options = getOptions(options)
+	// Arguments: path, name[, data[, type][, options]]]
+	return _setValue(path, name, data, type, options)
 }
-async function _setValue(path, name, data = '', type) {
+async function _setValue(path, name, data = '', type, options) {
 	if (isObject(data)) {
 		if (name)
 			path += `\\${name}`
 		var promises = Object.keys(data)
-			.map(name => _setValue(path, name, data[name]))
+			.map(name => _setValue(path, name, data[name], undefined, options))
 		return Promise.all(promises)
 	}
 	// Uppercase and make sure the type starts with REG_
@@ -70,8 +84,10 @@ async function _setValue(path, name, data = '', type) {
 	// Data might not be defined.
 	if (data !== undefined)
 		args.push('/d', data)
-	// Forces potential overwrite withou prompting.
+	// Forces potential overwrite without prompting.
 	args.push('/f')
+	// Set mode (32bit or 64 bit) if needed
+	args.push(modeToArg(options.mode))
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(args)

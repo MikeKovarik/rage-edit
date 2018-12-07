@@ -22,7 +22,7 @@ export class Registry {
 	_formatArgs(args) {
 		if (args.length === 0)
 			return [this.path]
-		// TODO: simplified, lowercase
+		// TODO: simplified, lowercase, mode
 		var firstArg = sanitizePath(args[0])
 		if (firstArg.startsWith('.\\'))
 			args[0] = this.path + firstArg.slice(1)
@@ -59,9 +59,9 @@ export class Registry {
 
 }
 
+
 Registry.VALUES = '$values'
 Registry.DEFAULT = ''
-
 
 Registry.unicode = false
 Registry.lastCodePage
@@ -71,6 +71,8 @@ Registry.lowercase = true
 // Calls return simplified output format by default.
 // Can be 'simple', 'complex', (TODO) 'naive'
 Registry.format = 'simple'
+// By default mode depends on node.js arch
+Registry.mode = 'none'
 
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'
