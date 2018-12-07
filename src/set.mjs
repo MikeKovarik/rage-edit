@@ -1,4 +1,4 @@
-import {execute, sanitizePath, getOptions, inferAndStringifyData, sanitizeType, modeToArg} from './util.mjs'
+import {execute, sanitizePath, getOptions, inferAndStringifyData, sanitizeType, bitsToArg} from './util.mjs'
 import {TYPES} from './constants.mjs'
 import {Registry} from './Registry.mjs'
 
@@ -32,9 +32,9 @@ Registry.setKey = async function(path, options) {
 	options = getOptions(options)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
-	await execute(['add', path, '/f', modeToArg(options.mode)])
+	await execute(['add', path, '/f', bitsToArg(options.bits)])
 	// 'reg.exe add' always creates/overrides '(default)' item with empty string (not undefined value). This command makes '(default)' undefined.
-	await execute(['delete', path, '/ve', '/f', modeToArg(options.mode)])
+	await execute(['delete', path, '/ve', '/f', bitsToArg(options.bits)])
 }
 
 
@@ -87,7 +87,7 @@ async function _setValue(path, name, data = '', type, options) {
 	// Forces potential overwrite without prompting.
 	args.push('/f')
 	// Set mode (32bit or 64 bit) if needed
-	args.push(modeToArg(options.mode))
+	args.push(bitsToArg(options.bits))
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(args)

@@ -24,10 +24,8 @@ const HKCC  = 'HKCC'
 export const HIVES = [HKLM, HKCU, HKCR, HKU, HKCC]
 
 
-export const MODE64     = '64bit'
-export const MODE32     = '32bit'
-export const MODE64_ARG = '/reg:64'
-export const MODE32_ARG = '/reg:32'
+export const ARG_64BIT = '/reg:64'
+export const ARG_32BIT = '/reg:32'
 
 
 export function shortenKeyPath(path) {

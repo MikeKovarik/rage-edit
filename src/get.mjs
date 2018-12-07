@@ -1,6 +1,7 @@
-import {execute, sanitizePath, getOptions, parseValueData, modeToArg} from './util.mjs'
+import {execute, sanitizePath, getOptions, parseValueData, bitsToArg} from './util.mjs'
 import {extendKeyPath} from './constants.mjs'
 import {Registry} from './Registry.mjs'
+import {VALUE_DEFAULT, VALUE_NOT_SET} from './util.mjs'
 
 
 Registry.prototype.get = function(...args) {
@@ -47,9 +48,9 @@ Registry.getKey = async function(path, recursive, options) {
 	// Populate options with default values
 	options = getOptions(options)
 	if (recursive)
-		var result = await execute(['query', path, '/s', modeToArg(options.mode)])
+		var result = await execute(['query', path, '/s', bitsToArg(options.bits)])
 	else
-		var result = await execute(['query', path, modeToArg(options.mode)])
+		var result = await execute(['query', path, bitsToArg(options.bits)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 	// Slight preprocessing of the returned result
@@ -96,9 +97,9 @@ Registry.getValue = async function(path, name = Registry.DEFAULT, options) {
 	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	if (name === Registry.DEFAULT)
-		var result = await execute(['query', path, '/ve', modeToArg(options.mode)])
+		var result = await execute(['query', path, '/ve', bitsToArg(options.bits)])
 	else
-		var result = await execute(['query', path, '/v', name, modeToArg(options.mode)])
+		var result = await execute(['query', path, '/v', name, bitsToArg(options.bits)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 
@@ -122,7 +123,7 @@ Registry.getKeys = async function(path, options) {
 	// Populate options with default values
 	options = getOptions(options)
 	// Create simple query at given path
-	var result = await execute(['query', path, modeToArg(options.mode)])
+	var result = await execute(['query', path, bitsToArg(options.bits)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 	// REG can take shorter paths, but returns strictily long paths.
@@ -152,7 +153,7 @@ Registry.getValues = async function(path, options) {
 	// Populate options with default values
 	options = getOptions(options)
 	// Create simple query at given path
-	var result = await execute(['query', path, modeToArg(options.mode)])
+	var result = await execute(['query', path, bitsToArg(options.bits)])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 	// Split result by lines and only keep the ones starting with space - only those contain value entry.
@@ -179,7 +180,7 @@ Registry.hasKey = function(path, options) {
 	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
-	return execute(['query', path, modeToArg(options.mode)])
+	return execute(['query', path, bitsToArg(options.bits)])
 		.then(result => result === undefined ? false : true)
 }
 
@@ -200,9 +201,9 @@ Registry.hasValue = async function(path, name, options) {
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
 	if (name === Registry.DEFAULT)
-		var result = await execute(['query', path, '/ve', modeToArg(options.mode)])
+		var result = await execute(['query', path, '/ve', bitsToArg(options.bits)])
 	else
-		var result = await execute(['query', path, '/v', name, modeToArg(options.mode)])
+		var result = await execute(['query', path, '/v', name, bitsToArg(options.bits)])
 	if (result === undefined) return false
 	// Default value name is represented by a word default in brackets.
 	if (name === Registry.DEFAULT)

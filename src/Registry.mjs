@@ -71,8 +71,6 @@ Registry.lowercase = true
 // Calls return simplified output format by default.
 // Can be 'simple', 'complex', (TODO) 'naive'
 Registry.format = 'simple'
-// By default mode depends on node.js arch
-Registry.mode = 'none'
 
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'

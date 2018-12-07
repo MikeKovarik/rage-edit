@@ -1,4 +1,4 @@
-import {execute, sanitizePath, getOptions, modeToArg} from './util.mjs'
+import {execute, sanitizePath, getOptions, bitsToArg} from './util.mjs'
 import {Registry} from './Registry.mjs'
 
 
@@ -39,7 +39,7 @@ Registry.deleteKey = async function(path, options) {
 	options = getOptions(options)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
-	await execute(['delete', path, '/f', modeToArg(options.mode)])
+	await execute(['delete', path, '/f', bitsToArg(options.bits)])
 }
 
 
@@ -57,9 +57,9 @@ Registry.deleteValue = async function(path, name, options) {
 	// Populate options with default values
 	options = getOptions(options)
 	if (name === Registry.DEFAULT)
-		var args = ['delete', path, '/ve', '/f', modeToArg(options.mode)]
+		var args = ['delete', path, '/ve', '/f', bitsToArg(options.bits)]
 	else
-		var args = ['delete', path, '/v', name, '/f', modeToArg(options.mode)]
+		var args = ['delete', path, '/v', name, '/f', bitsToArg(options.bits)]
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(args)
@@ -75,7 +75,7 @@ Registry.clearValues = async function(path, options) {
 	options = getOptions(options)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
-	await execute(['delete', path, '/va', '/f', modeToArg(options.mode)])
+	await execute(['delete', path, '/va', '/f', bitsToArg(options.bits)])
 }
 
 
