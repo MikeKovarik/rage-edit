@@ -31,39 +31,155 @@ function noop() {}
 var resolveError = err => err
 var genUID = () => `${Date.now()}-${process.hrtime().join('')}`
 
+// Wrappers for tests
+var getOpts = Registry._argsToOpts
+var getKey = (...args) => Registry.getKey(getOpts(...args))
+var getKeys = (...args) => Registry.getKeys(getOpts(...args))
+var getValue = (...args) => Registry.getValue(getOpts(...args))
+var getValues = (...args) => Registry.getValues(getOpts(...args))
+var hasKey = (...args) => Registry.hasKey(getOpts(...args))
+var hasValue = (...args) => Registry.hasValue(getOpts(...args))
+var deleteKey = (...args) => Registry.deleteKey(getOpts(...args))
+var deleteValue = (...args) => Registry.deleteValue(getOpts(...args))
+var clearKeys = (...args) => Registry.clearKeys(getOpts(...args))
+var clearValues = (...args) => Registry.clearValues(getOpts(...args))
+var setKey = (...args) => Registry.setKey(getOpts(...args))
+var setValue = (...args) => Registry.setValue(getOpts(...args))
+
+// Registry.debug = true
+
 describe('Registry static', () => {
 
+
+	describe('Internal', () => {
+
+		describe('.getOptions', () => {
+
+			it('returns valid values if called without arguments', async () => {
+				var options = getOpts()
+				assert.equal(options.path, undefined)
+				assert.equal(options.name, undefined)
+				assert.equal(options.data, undefined)
+				assert.equal(options.type, undefined)
+				assert.equal(options.lowercase, true)
+				assert.equal(options.format, Registry.format)
+				assert.equal(options.bits, null)
+			})
+
+			it('allows both forwardslashes and backslashes', async () => {
+				var backslashes = getOpts('HKLM\\SOFTWARE\\MikeKovarik').path
+				var forwardslashes = getOpts('HKLM/SOFTWARE/MikeKovarik').path
+				assert.equal(forwardslashes, 'HKLM\\SOFTWARE\\MikeKovarik')
+				assert.equal(backslashes, forwardslashes)
+			})
+
+			it('allows both forwardslashes and backslashes', async () => {
+				var bits64 = getOpts({bits: 64}).bits
+				var bits32 = getOpts({bits: 32}).bits
+				var bitsNull = getOpts({bits: 47}).bits
+				assert.equal(bits64, '/reg:64')
+				assert.equal(bits32, '/reg:32')
+				assert.equal(bitsNull, null)
+			})
+
+			it('converts arguments in proper order', async () => {
+				var NAME = 'name'
+				var DATA = 'value'
+				var TYPE = 'REG_SZ'
+				var FORMAT = Registry.format
+				var options = getOpts(PATH, NAME, DATA, {type: TYPE, format: FORMAT})
+				assert.equal(options.path, PATH)
+				assert.equal(options.name, NAME)
+				assert.equal(options.data, DATA)
+				assert.equal(options.type, TYPE)
+				assert.equal(options.format, FORMAT)
+			})
+
+			it('keeps custom options', async () => {
+				var options = getOpts({somethingNew: 123})
+				assert.equal(options.somethingNew, 123)
+			})
+
+		})
+
+		describe('Unicode mode', () => {
+
+			var cp
+
+			before(async () =>  {
+				cp = await Registry.getCodePage()
+			})
+
+			after(async () =>  {
+				await Registry.setCodePage(cp)
+			})
+
+			it('can change code page', async () => {
+				await Registry.setCodePage(437)
+				assert.equal(await Registry.getCodePage(), 437)
+				await Registry.setCodePage(65001)
+				assert.equal(await Registry.getCodePage(), 65001)
+				await Registry.setCodePage(cp)
+				assert.equal(await Registry.getCodePage(), cp)
+			})
+
+			it('.enableUnicode', async () => {
+				assert.equal(Registry.lastCodePage, undefined)
+				var enabled = await Registry.enableUnicode()
+				assert.isTrue(enabled)
+				assert.equal(Registry.lastCodePage, cp)
+			})
+
+			it(`can't call .enableUnicode twice`, async () => {
+				var enabled = await Registry.enableUnicode()
+				assert.isFalse(enabled)
+			})
+
+			it('.disableUnicode', async () => {
+				assert.equal(Registry.lastCodePage, cp)
+				await Registry.disableUnicode()
+				assert.equal(Registry.lastCodePage, undefined)
+			})
+
+			it(`can't call .disableUnicode twice`, async () => {
+				var enabled = await Registry.disableUnicode()
+				assert.isFalse(enabled)
+			})
+
+		})
+
+	})
 
 	describe('.getKeys', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.getKeys)
+			assert.isFunction(getKeys)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
-			var keys = await Registry.getKeys(PATH_NONEXISTENT)
+			var keys = await getKeys(PATH_NONEXISTENT)
 			assert.equal(keys, undefined)
 		})
 
 		it('returns an array', async () => {
-			var keys = await Registry.getKeys('HKCR\\Directory\\Background')
+			var keys = await getKeys('HKCR\\Directory\\Background')
 			assert.isArray(keys)
 		})
 
 		it('accepts full hive names', async () => {
-			var keys = await Registry.getKeys('HKEY_CLASSES_ROOT\\Directory\\Background')
+			var keys = await getKeys('HKEY_CLASSES_ROOT\\Directory\\Background')
 			assert.isArray(keys)
 		})
 
 		it('returns empty array if no subkeys', async () => {
 			// note: .txt pobably always has ShellNew subkey. It's best bet for writing test without
 			// having to employ other methods like setKey()
-			var keys = await Registry.getKeys('HKCR\\.txt\\ShellNew')
+			var keys = await getKeys('HKCR\\.txt\\ShellNew')
 			assert.isEmpty(keys)
 		})
 
 		it('returned array should contain subkeys', async () => {
-			var keys = await Registry.getKeys('HKCR\\Directory\\Background')
+			var keys = await getKeys('HKCR\\Directory\\Background')
 			for (var item of keys) {
 				assert.isFalse(item.toUpperCase().startsWith('HKEY_CLASSES_ROOT'))
 			}
@@ -72,13 +188,13 @@ describe('Registry static', () => {
 		})
 
 		it('returns an array of lowercase subkeys by default', async () => {
-			var keys = await Registry.getKeys('HKCR\\Directory\\Background\\shellex')
+			var keys = await getKeys('HKCR\\Directory\\Background\\shellex')
 			assert.isNotEmpty(keys)
 			assert.include(keys, 'contextmenuhandlers')
 		})
 
 		it('returns an array of case sensitive subkeys if requested', async () => {
-			var keys = await Registry.getKeys('HKCR\\Directory\\Background\\shellex', {lowercase: false})
+			var keys = await getKeys('HKCR\\Directory\\Background\\shellex', {lowercase: false})
 			assert.isNotEmpty(keys)
 			assert.include(keys, 'ContextMenuHandlers')
 		})
@@ -88,8 +204,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 
-			var keys64 = await Registry.getKeys(path, {bits: 64})
-			var keys32 = await Registry.getKeys(path, {bits: 32})
+			var keys64 = await getKeys(path, {bits: 64})
+			var keys32 = await getKeys(path, {bits: 32})
 
 			assert.isNotEmpty(keys64)
 			assert.isNotEmpty(keys32)
@@ -103,8 +219,8 @@ describe('Registry static', () => {
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
 
-			var keys32 = await Registry.getKeys(path, {bits: 32})
-			var keysWow = await Registry.getKeys(pathWow)
+			var keys32 = await getKeys(path, {bits: 32})
+			var keysWow = await getKeys(pathWow)
 
 			assert.isNotEmpty(keys32)
 			assert.isNotEmpty(keysWow)
@@ -115,7 +231,7 @@ describe('Registry static', () => {
 		describe('complex form', () => {
 
 			it('returns an array of strings', async () => {
-				var keys = await Registry.getKeys('HKCR\\Directory\\Background', {format: 'complex'})
+				var keys = await getKeys('HKCR\\Directory\\Background', {format: 'complex'})
 				assert.isArray(keys)
 				assert.isNotEmpty(keys)
 				var item = keys[0]
@@ -123,21 +239,21 @@ describe('Registry static', () => {
 			})
 
 			it('subkeys start with long hive names', async () => {
-				var keys = await Registry.getKeys('HKCR\\Directory\\Background', {format: 'complex'})
+				var keys = await getKeys('HKCR\\Directory\\Background', {format: 'complex'})
 				for (var item of keys) {
 					assert.isTrue(item.toUpperCase().startsWith('HKEY_CLASSES_ROOT'))
 				}
 			})
 
 			it('includes correct subkeys', async () => {
-				var keys = await Registry.getKeys('HKCR\\Directory\\Background', {format: 'complex'})
+				var keys = await getKeys('HKCR\\Directory\\Background', {format: 'complex'})
 				keys = keys.map(key => key.split('\\').pop())
 				assert.include(keys, 'shell')
 				assert.include(keys, 'shellex')
 			})
 
 			it('includes correct subkeys 2', async () => {
-				var keys = await Registry.getKeys('HKCR\\Directory\\Background\\shellex', {format: 'complex'})
+				var keys = await getKeys('HKCR\\Directory\\Background\\shellex', {format: 'complex'})
 				keys = keys.map(path => path.toLowerCase())
 				assert.include(keys, 'hkey_classes_root\\directory\\background\\shellex\\contextmenuhandlers')
 			})
@@ -151,31 +267,31 @@ describe('Registry static', () => {
 	describe('.getValues', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.getValues)
+			assert.isFunction(getValues)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
-			var values = await Registry.getValues(PATH_NONEXISTENT)
+			var values = await getValues(PATH_NONEXISTENT)
 			assert.equal(values, undefined)
 		})
 
 		it('returns an object', async () => {
-			var values = await Registry.getValues('HKCR\\*')
+			var values = await getValues('HKCR\\*')
 			assert.isObject(values)
 		})
 
 		it('returns empty object if no entries', async () => {
-			var values = await Registry.getValues('HKCR\\*\\shell')
+			var values = await getValues('HKCR\\*\\shell')
 			assert.isEmpty(values)
 		})
 
 		it('undefined values should be properly recognized as undefined', async () => {
-			var values = await Registry.getValues('HKCR\\*')
+			var values = await getValues('HKCR\\*')
 			assert.equal(values[''], undefined)
 		})
 
 		it('empty string values should be properly recognized as empty string', async () => {
-			var values = await Registry.getValues('HKCR\\*')
+			var values = await getValues('HKCR\\*')
 			assert.equal(values['alwaysshowext'], '')
 		})
 
@@ -183,16 +299,16 @@ describe('Registry static', () => {
 		// NOTE: paths and value names are key insensitive and whenever its queries
 		// reg command will always respond. But when 
 		it('value name is case insensitive by default', async () => {
-			var result = await Registry.getValues('HKCR\\*')
+			var result = await getValues('HKCR\\*')
 			assert.exists(result['alwaysshowext'])
-			result = await Registry.getValues('HKCR\\*')
+			result = await getValues('HKCR\\*')
 			assert.notExists(result['AlwaysShowExt'])
 		})
 
 		it('can be switched to case sensitive', async () => {
-			var result = await Registry.getValues('HKCR\\*', {lowercase: false})
+			var result = await getValues('HKCR\\*', {lowercase: false})
 			assert.exists(result['AlwaysShowExt'])
-			result = await Registry.getValues('HKCR\\*', {lowercase: false})
+			result = await getValues('HKCR\\*', {lowercase: false})
 			assert.notExists(result['alwaysshowext'])
 		})
 
@@ -201,8 +317,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var values64 = await Registry.getValues(path, {bits: 64})
-			var values32 = await Registry.getValues(path, {bits: 32})
+			var values64 = await getValues(path, {bits: 64})
+			var values32 = await getValues(path, {bits: 32})
 
 			assert.isNotEmpty(values64)
 			assert.isNotEmpty(values32)
@@ -216,8 +332,8 @@ describe('Registry static', () => {
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
 
-			var valuesWow = await Registry.getValues(pathWow)
-			var values32 = await Registry.getValues(path, {bits: 32})
+			var valuesWow = await getValues(pathWow)
+			var values32 = await getValues(path, {bits: 32})
 
 			assert.isNotEmpty(valuesWow)
 			assert.isNotEmpty(values32)
@@ -230,14 +346,14 @@ describe('Registry static', () => {
 		describe('complex form', () => {
 
 			it('returns an array of objects', async () => {
-				var values = await Registry.getValues('HKCR\\*', {format: 'complex'})
+				var values = await getValues('HKCR\\*', {format: 'complex'})
 				assert.isArray(values)
 				var entry = values[0]
 				assert.isObject(entry)
 			})
 
 			it('entries are represented by objects', async () => {
-				var values = await Registry.getValues('HKCR\\*', {format: 'complex'})
+				var values = await getValues('HKCR\\*', {format: 'complex'})
 				var entry = values[0]
 				assert.isString(entry.name)
 				assert.isTrue('data' in entry)
@@ -252,51 +368,51 @@ describe('Registry static', () => {
 	describe('.getValue', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.getValue)
+			assert.isFunction(getValue)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
-			var result = await Registry.getValue(PATH_NONEXISTENT)
+			var result = await getValue(PATH_NONEXISTENT)
 			assert.equal(result, undefined)
 		})
 
 		it('returns value of default entry', async () => {
-			var result = await Registry.getValue('HKCR\\Directory', '')
+			var result = await getValue('HKCR\\Directory', '')
 			assert.equal(result, 'File Folder')
 		})
 
 		it('omitted second argument (name) falls back to default name (empty string)', async () => {
-			var result = await Registry.getValue('HKCR\\Directory')
+			var result = await getValue('HKCR\\Directory')
 			assert.equal(result, 'File Folder')
 		})
 
 		it('returns empty string if the value entry has empty string data', async () => {
-			var result = await Registry.getValue('HKCR\\*', 'alwaysshowext')
+			var result = await getValue('HKCR\\*', 'alwaysshowext')
 			assert.equal(result, '')
 		})
 
 		it('returns string if the value entry has string data', async () => {
-			var result = await Registry.getValue('HKCR\\*', 'AlwaysShowExt')
+			var result = await getValue('HKCR\\*', 'AlwaysShowExt')
 			assert.isString(result)
 		})
 
 		// NOTE: reg command is insensitive 
 		it('value name is case insensitive by default', async () => {
-			var result = await Registry.getValue('HKCR\\*', 'AlwaysShowExt')
+			var result = await getValue('HKCR\\*', 'AlwaysShowExt')
 			assert.exists(result)
-			result = await Registry.getValue('HKCR\\*', 'alwaysshowext')
+			result = await getValue('HKCR\\*', 'alwaysshowext')
 			assert.exists(result)
 		})
 
 		//it('can be switched to case sensitive', async () => {
-		//	var result = await Registry.getValue('HKCR\\*', 'AlwaysShowExt', true)
+		//	var result = await getValue('HKCR\\*', 'AlwaysShowExt', true)
 		//	assert.exists(result)
-		//	result = await Registry.getValue('HKCR\\*', 'alwaysshowext', true)
+		//	result = await getValue('HKCR\\*', 'alwaysshowext', true)
 		//	assert.notExists(result)
 		//})
 
 		it('returns undefined if the value entry exists, but does not value any data', async () => {
-			var result = await Registry.getValue('HKCR\\*', '')
+			var result = await getValue('HKCR\\*', '')
 			assert.equal(result, undefined)
 		})
 
@@ -305,8 +421,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var value64 = await Registry.getValue(path, 'path', {bits: 64})
-			var value32 = await Registry.getValue(path, 'path', {bits: 32})
+			var value64 = await getValue(path, 'path', {bits: 64})
+			var value32 = await getValue(path, 'path', {bits: 32})
 
 			assert.notEqual(value64, value32)
 		})
@@ -317,8 +433,8 @@ describe('Registry static', () => {
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
 
-			var valueWow = await Registry.getValue(pathWow, 'path')
-			var value32 = await Registry.getValue(path, 'path', {bits: 32})
+			var valueWow = await getValue(pathWow, 'path')
+			var value32 = await getValue(path, 'path', {bits: 32})
 
 			assert.equal(valueWow, value32)
 		})
@@ -328,43 +444,43 @@ describe('Registry static', () => {
 
 			it('reads REG_SZ as string', async () => {
 				var NAME = 'casting-1'
-				await Registry.setValue(PATH, NAME, 'some string', 'REG_SZ')
-				assert.isString(await Registry.getValue(PATH, NAME))
+				await setValue(PATH, NAME, 'some string', {type: 'REG_SZ'})
+				assert.isString(await getValue(PATH, NAME))
 			})
 
 			it('reads REG_DWORD as number', async () => {
 				var NAME = 'casting-2'
-				await Registry.setValue(PATH, NAME, 1234, 'REG_DWORD')
-				assert.isNumber(await Registry.getValue(PATH, NAME))
+				await setValue(PATH, NAME, 1234, {type: 'REG_DWORD'})
+				assert.isNumber(await getValue(PATH, NAME))
 			})
 
 			it('reads REG_QWORD as string in 0x format', async () => {
 				var NAME = 'casting-3'
-				await Registry.setValue(PATH, NAME, 1234, 'REG_QWORD')
-				var data = await Registry.getValue(PATH, NAME)
+				await setValue(PATH, NAME, 1234, {type: 'REG_QWORD'})
+				var data = await getValue(PATH, NAME)
 				assert.isString(data)
 				assert.isTrue(data.startsWith('0x'))
 			})
 
 			it('reads REG_BINARY as buffer', async () => {
 				var NAME = 'casting-4'
-				await Registry.setValue(PATH, NAME, Buffer.alloc(0), 'REG_BINARY')
-				var data = await Registry.getValue(PATH, NAME)
+				await setValue(PATH, NAME, Buffer.alloc(0), {type: 'REG_BINARY'})
+				var data = await getValue(PATH, NAME)
 				assert.equal(data.constructor.name, 'Buffer')
 			})
 
 			it('reads REG_MULTI_SZ as array', async () => {
 				var NAME = 'casting-4'
-				await Registry.setValue(PATH, NAME, [], 'REG_MULTI_SZ')
-				assert.isArray(await Registry.getValue(PATH, NAME))
+				await setValue(PATH, NAME, [], {type: 'REG_MULTI_SZ'})
+				assert.isArray(await getValue(PATH, NAME))
 			})
 
 			it('string to REG_BINARY', async () => {
 				var NAME = 'binary-value'
 				var buffer = Buffer.from('Experience tranquility')
-				await Registry.deleteValue(PATH, NAME)
-				await Registry.setValue(PATH, NAME, buffer.toString(), 'REG_BINARY')
-				var {data, type} = await Registry.getValue(PATH, NAME, {format: 'complex'})
+				await deleteValue(PATH, NAME)
+				await setValue(PATH, NAME, buffer.toString(), {type: 'REG_BINARY'})
+				var {data, type} = await getValue(PATH, NAME, {format: 'complex'})
 				assert.equal(type, 'REG_BINARY')
 				assert.equal(data.toString(), buffer.toString())
 			})
@@ -374,12 +490,12 @@ describe('Registry static', () => {
 		describe('complex form', () => {
 
 			it('returns an object', async () => {
-				var entry = await Registry.getValue('HKCR\\*', 'AlwaysShowExt', {format: 'complex'})
+				var entry = await getValue('HKCR\\*', 'AlwaysShowExt', {format: 'complex'})
 				assert.isObject(entry)
 			})
 
 			it(`has 'name', 'type' and 'data' fields`, async () => {
-				var entry = await Registry.getValue('HKCR\\*', 'AlwaysShowExt', {format: 'complex'})
+				var entry = await getValue('HKCR\\*', 'AlwaysShowExt', {format: 'complex'})
 				assert.isString(entry.name)
 				assert.isTrue('data' in entry)
 				assert.isString(entry.type)
@@ -395,22 +511,22 @@ describe('Registry static', () => {
 	describe('.getKey', () => {
 
 		it('is function', async () => {
-			assert.equal(typeof Registry.getKey, 'function')
+			assert.equal(typeof getKey, 'function')
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
-			var result = await Registry.getKey(PATH_NONEXISTENT)
+			var result = await getKey(PATH_NONEXISTENT)
 			assert.equal(typeof result, 'undefined')
 		})
 
 		it('returns lowercase keys', async () => {
-			var result = await Registry.getKey('HKCR\\Directory\\shellex', {lowercase: true})
+			var result = await getKey('HKCR\\Directory\\shellex', {lowercase: true})
 			assert.isObject(result['contextmenuhandlers'])
 			assert.notExists(result['ContextMenuHandlers'])
 		})
 
 		it('can return case sensitive keys', async () => {
-			var result = await Registry.getKey('HKCR\\Directory\\shellex', {lowercase: false})
+			var result = await getKey('HKCR\\Directory\\shellex', {lowercase: false})
 			assert.isObject(result['ContextMenuHandlers'])
 			assert.notExists(result['contextmenuhandlers'])
 		})
@@ -420,8 +536,8 @@ describe('Registry static', () => {
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 
-			var key64 = await Registry.getKey(path, {bits: 64})
-			var key32 = await Registry.getKey(path, {bits: 32})
+			var key64 = await getKey(path, {bits: 64})
+			var key32 = await getKey(path, {bits: 32})
 
 			assert.isNotEmpty(key64)
 			assert.isNotEmpty(key32)
@@ -435,8 +551,8 @@ describe('Registry static', () => {
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
 			var pathWow = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Shared Tools\\Msinfo'
 
-			var keyWow = await Registry.getKey(pathWow)
-			var key32 = await Registry.getKey(path, {bits: 32})
+			var keyWow = await getKey(pathWow)
+			var key32 = await getKey(path, {bits: 32})
 
 			assert.isNotEmpty(keyWow)
 			assert.isNotEmpty(key32)
@@ -447,39 +563,39 @@ describe('Registry static', () => {
 		describe('simple format', () => {
 
 			it('returns simple format', async () => {
-				var result = await Registry.getKey('HKCR\\Directory')
+				var result = await getKey('HKCR\\Directory')
 				assert.isObject(result)
 				assert.isObject(result.$values)
 			})
 
 			it('has keys', async () => {
-				var result = await Registry.getKey('HKCR\\Directory')
+				var result = await getKey('HKCR\\Directory')
 				assert.exists(result['background'])
 				assert.exists(result['shell'])
 				assert.exists(result['shellex'])
 			})
 
 			it('has values', async () => {
-				var result = await Registry.getKey('HKCR\\Directory')
+				var result = await getKey('HKCR\\Directory')
 				assert.equal(result.$values[''], 'File Folder')
 			})
 
 			it('empty default value does show up in $values', async () => {
 				await Registry.delete(OW_PATH)
 				await Registry.set(OW_PATH, '')
-				var result = await Registry.getKey(OW_PATH)
+				var result = await getKey(OW_PATH)
 				assert.isNotEmpty(Object.keys(result.$values))
 				assert.isTrue(Object.keys(result.$values).includes(''))
 			})
 			it('undefined default value does not show up in $values', async () => {
 				await Registry.delete(OW_PATH)
 				await Registry.set(OW_PATH)
-				var result = await Registry.getKey(OW_PATH)
+				var result = await getKey(OW_PATH)
 				assert.isEmpty(Object.keys(result.$values))
 			})
 
 			it('can work recursively', async () => {
-				var result = await Registry.getKey('HKCR\\Directory\\Background', true)
+				var result = await getKey('HKCR\\Directory\\Background', {recursive: true})
 				assert.isObject(result['shellex'])
 				assert.isObject(result['shellex']['contextmenuhandlers'])
 			})
@@ -489,21 +605,21 @@ describe('Registry static', () => {
 		describe('complex format', () => {
 
 			it('returns complex format', async () => {
-				var result = await Registry.getKey('HKCR\\Directory', {format: 'complex'})
+				var result = await getKey('HKCR\\Directory', {format: 'complex'})
 				assert.isObject(result)
 				assert.isObject(result.keys) // TODO
 				assert.isArray(result.values)
 			})
 
 			it('has keys', async () => {
-				var result = await Registry.getKey('HKCR\\Directory', {format: 'complex'})
+				var result = await getKey('HKCR\\Directory', {format: 'complex'})
 				assert.exists(result.keys['background'])
 				assert.exists(result.keys['shell'])
 				assert.exists(result.keys['shellex'])
 			})
 
 			it('has values', async () => {
-				var result = await Registry.getKey('HKCR\\Directory', {format: 'complex'})
+				var result = await getKey('HKCR\\Directory', {format: 'complex'})
 				var defaultEntry = result.values.filter(entryObject => entryObject.name === '')[0]
 				assert.isObject(defaultEntry)
 				assert.equal(defaultEntry.name, '')
@@ -514,19 +630,19 @@ describe('Registry static', () => {
 			it('empty default value does show up in $values', async () => {
 				await Registry.delete(OW_PATH)
 				await Registry.set(OW_PATH, '')
-				var result = await Registry.getKey(OW_PATH, {format: 'complex'})
+				var result = await getKey(OW_PATH, {format: 'complex'})
 				assert.isNotEmpty(result.values)
 				assert.isTrue(result.values[0].name === '')
 			})
 			it('undefined default value does not show up in $values', async () => {
 				await Registry.delete(OW_PATH)
 				await Registry.set(OW_PATH)
-				var result = await Registry.getKey(OW_PATH, {format: 'complex'})
+				var result = await getKey(OW_PATH, {format: 'complex'})
 				assert.isEmpty(result.values)
 			})
 
 			it('can work recursively', async () => {
-				var result = await Registry.getKey('HKCR\\Directory\\Background', true, {format: 'complex'})
+				var result = await getKey('HKCR\\Directory\\Background', true, {format: 'complex', recursive: true})
 				assert.isObject(result.keys['shellex'])
 				assert.isObject(result.keys['shellex'].keys)
 				assert.isObject(result.keys['shellex'].keys['contextmenuhandlers'])
@@ -582,15 +698,15 @@ describe('Registry static', () => {
 	describe('.hasKey', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.hasKey)
+			assert.isFunction(hasKey)
 		})
 
 		it('returns true if key at given path exists', async () => {
-			assert.isTrue(await Registry.hasKey('HKLM\\SOFTWARE'))
+			assert.isTrue(await hasKey('HKLM\\SOFTWARE'))
 		})
 
 		it(`returns false if key at given path doesn't exist`, async () => {
-			assert.isFalse(await Registry.hasKey(PATH_NONEXISTENT))
+			assert.isFalse(await hasKey(PATH_NONEXISTENT))
 		})
 		
 		it('checks different keys in 64bit and 32bit modes', async () => {
@@ -598,16 +714,16 @@ describe('Registry static', () => {
 
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
-			await Registry.setKey(PATH)
+			await setKey(PATH)
 
-			assert.isTrue(await Registry.hasKey(PATH, {bits: 64}))
-			assert.isFalse(await Registry.hasKey(PATH, {bits: 32}))
+			assert.isTrue(await hasKey(PATH, {bits: 64}))
+			assert.isFalse(await hasKey(PATH, {bits: 32}))
 
 			await Registry.delete(PATH)
-			await Registry.setKey(PATH_32BIT)
+			await setKey(PATH_32BIT)
 
-			assert.isFalse(await Registry.hasKey(PATH, {bits: 64}))
-			assert.isTrue(await Registry.hasKey(PATH, {bits: 32}))
+			assert.isFalse(await hasKey(PATH, {bits: 64}))
+			assert.isTrue(await hasKey(PATH, {bits: 32}))
 		})
 
 	})
@@ -616,15 +732,15 @@ describe('Registry static', () => {
 	describe('.hasValue', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.hasValue)
+			assert.isFunction(hasValue)
 		})
 
 		it('returns true if value entry exists at given path', async () => {
-			assert.isTrue(await Registry.hasValue('HKCR\\*', 'AlwaysShowExt'))
+			assert.isTrue(await hasValue('HKCR\\*', 'AlwaysShowExt'))
 		})
 
 		it(`returns false if value entry doesn't exist at given path`, async () => {
-			assert.isFalse(await Registry.hasValue('HKCR\\*', 'foo-bar non existent'))
+			assert.isFalse(await hasValue('HKCR\\*', 'foo-bar non existent'))
 		})
 
 		it('checks different values in 64bit and 32bit modes', async () => {
@@ -633,14 +749,14 @@ describe('Registry static', () => {
 			var value64 = `reg-mode-64-bit-${genUID()}`
 			var value32 = `reg-mode-32-bit-${genUID()}`
 
-			await Registry.setValue(PATH, value64, 'yes', 'REG_SZ')
-			await Registry.setValue(PATH_32BIT, value32, 'yes', 'REG_SZ')
+			await setValue(PATH, value64, 'yes', {type: 'REG_SZ'})
+			await setValue(PATH_32BIT, value32, 'yes', {type: 'REG_SZ'})
 
-			assert.isTrue(await Registry.hasValue(PATH, value64, {bits: 64}))
-			assert.isTrue(await Registry.hasValue(PATH, value32, {bits: 32}))
+			assert.isTrue(await hasValue(PATH, value64, {bits: 64}))
+			assert.isTrue(await hasValue(PATH, value32, {bits: 32}))
 			
-			assert.isFalse(await Registry.hasValue(PATH, value64, {bits: 32}))
-			assert.isFalse(await Registry.hasValue(PATH, value32, {bits: 64}))
+			assert.isFalse(await hasValue(PATH, value64, {bits: 32}))
+			assert.isFalse(await hasValue(PATH, value32, {bits: 64}))
 		})
 
 	})
@@ -675,11 +791,11 @@ describe('Registry static', () => {
 			var SUBPATH = `${PATH}\\Testing .has ${UID}`
 			var SUBPATH_32BIT = `${PATH_32BIT}\\Testing .has ${UID}`
 
-			await Registry.setKey(SUBPATH_32BIT)
+			await setKey(SUBPATH_32BIT)
 			assert.isFalse(await Registry.has(SUBPATH, {bits: 64}))
 			assert.isTrue(await Registry.has(SUBPATH, {bits: 32}))
 
-			await Registry.setKey(SUBPATH)
+			await setKey(SUBPATH)
 
 			assert.isTrue(await Registry.has(SUBPATH, {bits: 64}))
 		})
@@ -690,8 +806,8 @@ describe('Registry static', () => {
 			var value64 = `reg-mode-64-bit-${genUID()}`
 			var value32 = `reg-mode-32-bit-${genUID()}`
 
-			await Registry.setValue(PATH, value64, 'yes', 'REG_SZ')
-			await Registry.setValue(PATH_32BIT, value32, 'yes', 'REG_SZ')
+			await setValue(PATH, value64, 'yes', {type: 'REG_SZ'})
+			await setValue(PATH_32BIT, value32, 'yes', {type: 'REG_SZ'})
 
 			assert.isTrue(await Registry.has(PATH, value64, {bits: 64}))
 			assert.isFalse(await Registry.has(PATH, value32, {bits: 64}))
@@ -706,39 +822,39 @@ describe('Registry static', () => {
 	describe('.deleteKey', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.deleteKey)
+			assert.isFunction(deleteKey)
 		})
 
 		it('deletes the key at given path', async () => {
-			await Registry.setKey(PATH)
-			await Registry.deleteKey(PATH)
-			assert.isFalse(await Registry.hasKey(PATH))
+			await setKey(PATH)
+			await deleteKey(PATH)
+			assert.isFalse(await hasKey(PATH))
 		})
 
 		it('deletion of an existing key does not throw', async () => {
-			await Registry.setKey(PATH)
-			await assert.willNotThrow(Registry.deleteKey(PATH))
+			await setKey(PATH)
+			await assert.willNotThrow(deleteKey(PATH))
 		})
 
 		it('deletion of nonexisting key does not throw', async () => {
-			await Registry.deleteKey(PATH_NONEXISTENT)
+			await deleteKey(PATH_NONEXISTENT)
 		})
 
 		it('deletes different keys in 64bit and 32bit modes', async () => {
 			assert.isOk(isNode64bit, isNode64bitMsg)
 
-			await Registry.setKey(PATH)
-			await Registry.setKey(PATH_32BIT)
-			await Registry.deleteKey(PATH, {bits: 64})
+			await setKey(PATH)
+			await setKey(PATH_32BIT)
+			await deleteKey(PATH, {bits: 64})
 
-			assert.isFalse(await Registry.hasKey(PATH))
-			assert.isTrue(await Registry.hasKey(PATH_32BIT))
+			assert.isFalse(await hasKey(PATH))
+			assert.isTrue(await hasKey(PATH_32BIT))
 
-			await Registry.setKey(PATH)
-			await Registry.deleteKey(PATH, {bits: 32})
+			await setKey(PATH)
+			await deleteKey(PATH, {bits: 32})
 
-			assert.isTrue(await Registry.hasKey(PATH))
-			assert.isFalse(await Registry.hasKey(PATH_32BIT))
+			assert.isTrue(await hasKey(PATH))
+			assert.isFalse(await hasKey(PATH_32BIT))
 		})
 
 	})
@@ -747,28 +863,28 @@ describe('Registry static', () => {
 	describe('.deleteValue', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.deleteValue)
+			assert.isFunction(deleteValue)
 		})
 
 		it('deletes the value at given path', async () => {
 			const NAME = 'deleteme'
 			await Registry.set(PATH, NAME, 'this is the value entry to be deleted')
-			assert.isTrue(await Registry.hasValue(PATH, NAME))
-			await Registry.deleteValue(PATH, NAME)
-			assert.isFalse(await Registry.hasValue(PATH, NAME))
+			assert.isTrue(await hasValue(PATH, NAME))
+			await deleteValue(PATH, NAME)
+			assert.isFalse(await hasValue(PATH, NAME))
 		})
 
 		it('deletion of an existing value entry does not throw', async () => {
 			const NAME = 'deleteme'
 			await Registry.set(PATH, NAME, 'this is the value entry to be deleted')
-			await assert.willNotThrow(Registry.deleteValue(PATH, NAME))
+			await assert.willNotThrow(deleteValue(PATH, NAME))
 		})
 
 		//it('deletion of nonexisting value entry throws', async () => {
 		it('deletion of nonexisting value does not throw', async () => {
 			const NAME = 'deleteme'
-			await Registry.deleteValue(PATH, NAME).catch(noop)
-			await Registry.deleteValue(PATH, NAME)
+			await deleteValue(PATH, NAME).catch(noop)
+			await deleteValue(PATH, NAME)
 		})
 
 		it('deletes different values in 64bit and 32bit modes', async () => {
@@ -778,16 +894,16 @@ describe('Registry static', () => {
 
 			await Registry.set(PATH, NAME)
 			await Registry.set(PATH_32BIT, NAME)
-			await Registry.deleteValue(PATH, NAME, {bits: 64})
+			await deleteValue(PATH, NAME, {bits: 64})
 
-			assert.isFalse(await Registry.hasValue(PATH, NAME))
-			assert.isTrue(await Registry.hasValue(PATH_32BIT, NAME))
+			assert.isFalse(await hasValue(PATH, NAME))
+			assert.isTrue(await hasValue(PATH_32BIT, NAME))
 
 			await Registry.set(PATH, NAME)
-			await Registry.deleteValue(PATH, NAME, {bits: 32})
+			await deleteValue(PATH, NAME, {bits: 32})
 
-			assert.isTrue(await Registry.hasValue(PATH, NAME))
-			assert.isFalse(await Registry.hasValue(PATH_32BIT, NAME))
+			assert.isTrue(await hasValue(PATH, NAME))
+			assert.isFalse(await hasValue(PATH_32BIT, NAME))
 		})
 
 	})
@@ -800,37 +916,37 @@ describe('Registry static', () => {
 		})
 
 		it('only using one parameter serves as alias for .deleteKey', async () => {
-			await Registry.setKey(PATH)
-			assert.isTrue(await Registry.hasKey(PATH))
+			await setKey(PATH)
+			assert.isTrue(await hasKey(PATH))
 			await Registry.delete(PATH)
-			assert.isFalse(await Registry.hasKey(PATH))
+			assert.isFalse(await hasKey(PATH))
 		})
 
 		it('using two parameters serves as alias for .deleteValue', async () => {
 			var NAME = 'deleteme'
 			await Registry.set(PATH, NAME, 'Embrace the Iris')
-			assert.isTrue(await Registry.hasKey(PATH))
-			assert.isTrue(await Registry.hasValue(PATH, NAME))
+			assert.isTrue(await hasKey(PATH))
+			assert.isTrue(await hasValue(PATH, NAME))
 			await Registry.delete(PATH, NAME)
-			assert.isTrue(await Registry.hasKey(PATH))
-			assert.isFalse(await Registry.hasValue(PATH, NAME))
+			assert.isTrue(await hasKey(PATH))
+			assert.isFalse(await hasValue(PATH, NAME))
 		})
 
 		it('deletes different keys in 64bit and 32bit modes', async () => {
 			assert.isOk(isNode64bit, isNode64bitMsg)
 
-			await Registry.setKey(PATH)
-			await Registry.setKey(PATH_32BIT)
+			await setKey(PATH)
+			await setKey(PATH_32BIT)
 			await Registry.delete(PATH, {bits: 64})
 
-			assert.isFalse(await Registry.hasKey(PATH))
-			assert.isTrue(await Registry.hasKey(PATH_32BIT))
+			assert.isFalse(await hasKey(PATH))
+			assert.isTrue(await hasKey(PATH_32BIT))
 
-			await Registry.setKey(PATH)
+			await setKey(PATH)
 			await Registry.delete(PATH, {bits: 32})
 
-			assert.isTrue(await Registry.hasKey(PATH))
-			assert.isFalse(await Registry.hasKey(PATH_32BIT))
+			assert.isTrue(await hasKey(PATH))
+			assert.isFalse(await hasKey(PATH_32BIT))
 
 		})
 
@@ -841,14 +957,14 @@ describe('Registry static', () => {
 			await Registry.set(PATH_32BIT, NAME)
 			await Registry.delete(PATH, NAME, {bits: 64})
 
-			assert.isFalse(await Registry.hasValue(PATH, NAME))
-			assert.isTrue(await Registry.hasValue(PATH_32BIT, NAME))
+			assert.isFalse(await hasValue(PATH, NAME))
+			assert.isTrue(await hasValue(PATH_32BIT, NAME))
 
 			await Registry.set(PATH, NAME)
 			await Registry.delete(PATH, NAME, {bits: 32})
 
-			assert.isTrue(await Registry.hasValue(PATH, NAME))
-			assert.isFalse(await Registry.hasValue(PATH_32BIT, NAME))
+			assert.isTrue(await hasValue(PATH, NAME))
+			assert.isFalse(await hasValue(PATH_32BIT, NAME))
 		})
 
 	})
@@ -858,21 +974,21 @@ describe('Registry static', () => {
 	describe('.setKey', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.setKey)
+			assert.isFunction(setKey)
 		})
 
 		it('creates new key', async () => {
 			const PATH = 'HKLM\\SOFTWARE\\MikeKovarik\\nonexistent'
-			await Registry.deleteKey(PATH).catch(noop)
-			await Registry.setKey(PATH)
-			assert.isTrue(await Registry.hasKey(PATH))
+			await deleteKey(PATH).catch(noop)
+			await setKey(PATH)
+			assert.isTrue(await hasKey(PATH))
 		})
 
 		it('overwrites already existing key', async () => {
 			const PATH = 'HKLM\\SOFTWARE\\MikeKovarik\\existing'
-			await Registry.setKey(PATH).catch(noop)
-			await Registry.setKey(PATH)
-			assert.isTrue(await Registry.hasKey(PATH))
+			await setKey(PATH).catch(noop)
+			await setKey(PATH)
+			assert.isTrue(await hasKey(PATH))
 		})
 
 		it('creates different keys in 64bit and 32bit modes', async () => {
@@ -881,17 +997,17 @@ describe('Registry static', () => {
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
 
-			await Registry.setKey(PATH, {bits: 64})
+			await setKey(PATH, {bits: 64})
 
-			assert.isTrue(await Registry.hasKey(PATH))
-			assert.isFalse(await Registry.hasKey(PATH_32BIT))
+			assert.isTrue(await hasKey(PATH))
+			assert.isFalse(await hasKey(PATH_32BIT))
 
 			await Registry.delete(PATH)
 
-			await Registry.setKey(PATH, {bits: 32})
+			await setKey(PATH, {bits: 32})
 
-			assert.isFalse(await Registry.hasKey(PATH))
-			assert.isTrue(await Registry.hasKey(PATH_32BIT))
+			assert.isFalse(await hasKey(PATH))
+			assert.isTrue(await hasKey(PATH_32BIT))
 		})
 
 	})
@@ -901,38 +1017,38 @@ describe('Registry static', () => {
 
 		async function getEntryType(NAME) {
 			// get complex object
-			var result = await Registry.getValue(PATH, NAME, {format: 'complex'})
+			var result = await getValue(PATH, NAME, {format: 'complex'})
 			return result.type
 		}
 
 		it('is function', async () => {
-			assert.isFunction(Registry.setValue)
+			assert.isFunction(setValue)
 		})
 
 		it('creates new value entry', async () => {
 			var NAME = 'value-entry-1'
 			var DATA = 'this is the newly created value data'
-			await Registry.deleteValue(PATH, NAME).catch(noop)
-			assert.isFalse(await Registry.hasValue(PATH, NAME))
-			await Registry.setValue(PATH, NAME, DATA)
-			assert.equal(await Registry.getValue(PATH, NAME), DATA)
+			await deleteValue(PATH, NAME).catch(noop)
+			assert.isFalse(await hasValue(PATH, NAME))
+			await setValue(PATH, NAME, DATA)
+			assert.equal(await getValue(PATH, NAME), DATA)
 		})
 
 		it('overwrites existing value entry', async () => {
 			var NAME = 'value-entry-2'
 			var INITIAL_DATA = 'initial data'
 			var FINAL_DATA = 'expected final data'
-			await Registry.setValue(PATH, NAME, INITIAL_DATA)
-			assert.isTrue(await Registry.hasValue(PATH, NAME))
-			await Registry.setValue(PATH, NAME, FINAL_DATA)
-			assert.equal(await Registry.getValue(PATH, NAME), FINAL_DATA)
+			await setValue(PATH, NAME, INITIAL_DATA)
+			assert.isTrue(await hasValue(PATH, NAME))
+			await setValue(PATH, NAME, FINAL_DATA)
+			assert.equal(await getValue(PATH, NAME), FINAL_DATA)
 		})
 
 		it(`creates empty REG_SZ value if the data argument isn't specified`, async () => {
 			var NAME = 'LegacyDisable'
 			await Registry.delete(OW_PATH, NAME)
-			await Registry.setValue(OW_PATH, NAME)
-			var value = await Registry.getValue(OW_PATH, NAME, {format: 'complex'})
+			await setValue(OW_PATH, NAME)
+			var value = await getValue(OW_PATH, NAME, {format: 'complex'})
 			assert.equal(value.name, 'legacydisable')
 			assert.equal(value.type, 'REG_SZ')
 			assert.equal(value.data, '')
@@ -941,10 +1057,10 @@ describe('Registry static', () => {
 		it(`also creates key if the path doesn't exist`, async () => {
 			var NAME = 'nested-entry-1'
 			var DATA = 'this is the newly created value data'
-			await Registry.deleteKey(PATH + '\\deep', NAME).catch(noop)
-			assert.isFalse(await Registry.hasKey(PATH + '\\deep'))
-			await Registry.setValue(PATH + '\\deep\\sub\\key', NAME, DATA)
-			assert.isTrue(await Registry.hasKey(PATH + '\\deep'))
+			await deleteKey(PATH + '\\deep', NAME).catch(noop)
+			assert.isFalse(await hasKey(PATH + '\\deep'))
+			await setValue(PATH + '\\deep\\sub\\key', NAME, DATA)
+			assert.isTrue(await hasKey(PATH + '\\deep'))
 		})
 
 		it('creates different values in 64bit and 32bit modes', async () => {
@@ -953,23 +1069,23 @@ describe('Registry static', () => {
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
 
-			await Registry.setValue(PATH, 'reg-mode', 'reg64bit', 'REG_SZ', {bits: 64})
-			await Registry.setValue(PATH, 'reg-mode', 'reg32bit', 'REG_SZ', {bits: 32})
+			await setValue(PATH, 'reg-mode', 'reg64bit', {type: 'REG_SZ', bits: 64})
+			await setValue(PATH, 'reg-mode', 'reg32bit', {type: 'REG_SZ', bits: 32})
 
-			assert.equal(await Registry.getValue(PATH, 'reg-mode'), 'reg64bit')
-			assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
+			assert.equal(await getValue(PATH, 'reg-mode'), 'reg64bit')
+			assert.equal(await getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
 		})
 
 		it(`'options' don't conflict with 'type'`, async () => {
-			await Registry.setValue(PATH_32BIT, 'value-entry-1', 123, 'REG_DWORD')
-			await Registry.setValue(PATH, 'value-entry-2', 123, {bits: 64})
-			await Registry.setValue(PATH, 'value-entry-3', 123, {bits: 32})
-			await Registry.setValue(PATH, 'value-entry-4', 123, 'REG_DWORD', {bits: 32})
+			await setValue(PATH_32BIT, 'value-entry-1', 123, {type: 'REG_DWORD'})
+			await setValue(PATH, 'value-entry-2', 123, {bits: 64})
+			await setValue(PATH, 'value-entry-3', 123, {bits: 32})
+			await setValue(PATH, 'value-entry-4', 123, {type: 'REG_DWORD', bits: 32})
 
-			var val1 = await Registry.getValue(PATH, 'value-entry-1', {bits: 32})
-			var val2 = await Registry.getValue(PATH, 'value-entry-2', {bits: 64})
-			var val3 = await Registry.getValue(PATH, 'value-entry-3', {bits: 32})
-			var val4 = await Registry.getValue(PATH, 'value-entry-4', {bits: 32})
+			var val1 = await getValue(PATH, 'value-entry-1', {bits: 32})
+			var val2 = await getValue(PATH, 'value-entry-2', {bits: 64})
+			var val3 = await getValue(PATH, 'value-entry-3', {bits: 32})
+			var val4 = await getValue(PATH, 'value-entry-4', {bits: 32})
 
 			assert.equal(val1, 123)
 			assert.equal(val1, val2)
@@ -984,25 +1100,25 @@ describe('Registry static', () => {
 
 			it('string as REG_SZ', async () => {
 				var NAME = 'type-infer-1'
-				await Registry.setValue(PATH, NAME, 'some string')
+				await setValue(PATH, NAME, 'some string')
 				assert.equal(await getEntryType(NAME), 'REG_SZ')
 			})
 
 			it('number as REG_DWORD', async () => {
 				var NAME = 'type-infer-2'
-				await Registry.setValue(PATH, NAME, 123)
+				await setValue(PATH, NAME, 123)
 				assert.equal(await getEntryType(NAME), 'REG_DWORD')
 			})
 
 			it('array as REG_MULTI_SZ', async () => {
 				var NAME = 'type-infer-3'
-				await Registry.setValue(PATH, NAME, ['one', 'two', 'three'])
+				await setValue(PATH, NAME, ['one', 'two', 'three'])
 				assert.equal(await getEntryType(NAME), 'REG_MULTI_SZ')
 			})
 
 			it('buffer as REG_BINARY', async () => {
 				var NAME = 'type-infer-4'
-				await Registry.setValue(PATH, NAME, Buffer.from('Zenyatta'))
+				await setValue(PATH, NAME, Buffer.from('Zenyatta'))
 				assert.equal(await getEntryType(NAME), 'REG_BINARY')
 			})
 
@@ -1014,43 +1130,43 @@ describe('Registry static', () => {
 			it('REG_SZ string', async () => {
 				var NAME = 'value-1'
 				var DATA = 'some data'
-				await Registry.setValue(PATH, NAME, DATA, 'REG_SZ')
-				assert.equal(await Registry.getValue(PATH, NAME), DATA)
+				await setValue(PATH, NAME, DATA, {type: 'REG_SZ'})
+				assert.equal(await getValue(PATH, NAME), DATA)
 			})
 
 			it('REG_DWORD number', async () => {
 				var NAME = 'value-2'
 				var DATA = 123
-				await Registry.setValue(PATH, NAME, DATA, 'REG_DWORD')
-				assert.equal(await Registry.getValue(PATH, NAME), DATA)
+				await setValue(PATH, NAME, DATA, {type: 'REG_DWORD'})
+				assert.equal(await getValue(PATH, NAME), DATA)
 			})
 
 			it('REG_DWORD string', async () => {
 				var NAME = 'value-3'
 				var DATA = '123'
-				await Registry.setValue(PATH, NAME, DATA, 'REG_DWORD')
-				assert.equal(await Registry.getValue(PATH, NAME), DATA)
+				await setValue(PATH, NAME, DATA, {type: 'REG_DWORD'})
+				assert.equal(await getValue(PATH, NAME), DATA)
 			})
 
 			it('REG_QWORD number', async () => {
 				var NAME = 'value-4'
 				var DATA = 123
-				await Registry.setValue(PATH, NAME, DATA, 'REG_QWORD')
-				assert.equal(await Registry.getValue(PATH, NAME), '0x' + DATA.toString(16))
+				await setValue(PATH, NAME, DATA, {type: 'REG_QWORD'})
+				assert.equal(await getValue(PATH, NAME), '0x' + DATA.toString(16))
 			})
 
 			it('REG_QWORD number', async () => {
 				var NAME = 'value-5'
 				var DATA = 123
-				await Registry.setValue(PATH, NAME, DATA + '', 'REG_QWORD')
-				assert.equal(await Registry.getValue(PATH, NAME), '0x' + DATA.toString(16))
+				await setValue(PATH, NAME, DATA + '', {type: 'REG_QWORD'})
+				assert.equal(await getValue(PATH, NAME), '0x' + DATA.toString(16))
 			})
 
 			it('REG_MULTI_SZ array', async () => {
 				var NAME = 'value-6'
 				var DATA = ['one', 'two', 'three']
-				await Registry.setValue(PATH, NAME, DATA, 'REG_MULTI_SZ')
-				var array = await Registry.getValue(PATH, NAME)
+				await setValue(PATH, NAME, DATA, {type: 'REG_MULTI_SZ'})
+				var array = await getValue(PATH, NAME)
 				assert.equal(array.length, DATA.length)
 				assert.equal(array[0], DATA[0])
 				assert.equal(array[1], DATA[1])
@@ -1060,8 +1176,8 @@ describe('Registry static', () => {
 			it('REG_MULTI_SZ string', async () => {
 				var NAME = 'value-7'
 				var DATA = 'one\0two\0three'
-				await Registry.setValue(PATH, NAME, DATA, 'REG_MULTI_SZ')
-				var array = await Registry.getValue(PATH, NAME)
+				await setValue(PATH, NAME, DATA, {type: 'REG_MULTI_SZ'})
+				var array = await getValue(PATH, NAME)
 				assert.equal(array.length, 3)
 				assert.equal(array[0], 'one')
 				assert.equal(array[1], 'two')
@@ -1071,8 +1187,8 @@ describe('Registry static', () => {
 			it('REG_BINARY', async () => {
 				var NAME = 'value-8'
 				var DATA = Buffer.from('Experience tranquility')
-				await Registry.setValue(PATH, NAME, DATA, 'REG_BINARY')
-				var buffer = await Registry.getValue(PATH, NAME)
+				await setValue(PATH, NAME, DATA, {type: 'REG_BINARY'})
+				var buffer = await getValue(PATH, NAME)
 				assert.equal(buffer.toString(), DATA.toString())
 			})
 
@@ -1083,26 +1199,26 @@ describe('Registry static', () => {
 
 			it('explicitly stores string as REG_DWORD', async () => {
 				var NAME = 'type-override-1'
-				await Registry.setValue(PATH, NAME, '123', 'REG_DWORD')
+				await setValue(PATH, NAME, '123', {type: 'REG_DWORD'})
 				assert.equal(await getEntryType(NAME), 'REG_DWORD')
 			})
 
 			it('explicitly stores string as REG_QWORD', async () => {
 				var NAME = 'type-override-2'
-				await Registry.setValue(PATH, NAME, '123', 'REG_QWORD')
+				await setValue(PATH, NAME, '123', {type: 'REG_QWORD'})
 				assert.equal(await getEntryType(NAME), 'REG_QWORD')
 			})
 
 			it('explicitly stores buffer as REG_SZ', async () => {
 				var NAME = 'type-override-3'
-				await Registry.setValue(PATH, NAME, Buffer.from('Zenyatta'), 'REG_SZ')
+				await setValue(PATH, NAME, Buffer.from('Zenyatta'), {type: 'REG_SZ'})
 				assert.equal(await getEntryType(NAME), 'REG_SZ')
 			})
 
 			it('explicitly stores string as REG_BINARY', async () => {
 				var NAME = 'type-override-4'
 				var DATA = 'Experience tranquility'
-				await Registry.setValue(PATH, NAME, 'Zenyatta', 'REG_BINARY')
+				await setValue(PATH, NAME, 'Zenyatta', {type: 'REG_BINARY'})
 				assert.equal(await getEntryType(NAME), 'REG_BINARY')
 			})
 
@@ -1114,14 +1230,14 @@ describe('Registry static', () => {
 			it('sz as REG_SZ', async () => {
 				var NAME = 'value-entry-9'
 				var DATA = '123'
-				await Registry.setValue(PATH, NAME, DATA, 'sz')
+				await setValue(PATH, NAME, DATA, 'sz')
 				assert.equal(await getEntryType(NAME), 'REG_SZ')
 			})
 
 			it('dword as REG_DWORD', async () => {
 				var NAME = 'value-entry-10'
 				var DATA = 123
-				await Registry.setValue(PATH, NAME, DATA, 'dword')
+				await setValue(PATH, NAME, DATA, 'dword')
 				assert.equal(await getEntryType(NAME), 'REG_DWORD')
 			})
 
@@ -1153,6 +1269,19 @@ describe('Registry static', () => {
 			assert.equal((await Registry.get(OW_PATH, 'scientists')).length, 3)
 		})
 
+		it('creates different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			await Registry.set(PATH, 'reg-mode', 'reg64bit', {bits: 64})
+			await Registry.set(PATH, 'reg-mode', 'reg32bit', {bits: 32})
+
+			assert.equal(await getValue(PATH, 'reg-mode'), 'reg64bit')
+			assert.equal(await getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
+		})
+
 		it(`nested complex`, async () => {
 			await Registry.delete(OW_PATH)
 			await Registry.set(OW_PATH, {
@@ -1169,17 +1298,40 @@ describe('Registry static', () => {
 			assert.equal(await Registry.get(BW_PATH, 'leader'), 'Gabriel Reyes')
 		})
 
-		it('creates different values in 64bit and 32bit modes', async () => {
+		it(`last argument can be explicitly marked as options object (two arguments)`, async () => {
 			assert.isOk(isNode64bit, isNode64bitMsg)
 
-			await Registry.delete(PATH)
-			await Registry.delete(PATH_32BIT)
+			var SUBPATH = `${PATH}\\isOptions-tests`
+			var SUBPATH_32BIT = `${PATH_32BIT}\\isOptions-tests`
 
-			await Registry.set(PATH, 'reg-mode', 'reg64bit', {bits: 64})
-			await Registry.set(PATH, 'reg-mode', 'reg32bit', {bits: 32})
+			await Registry.delete(SUBPATH)
+			await Registry.delete(SUBPATH_32BIT)
 
-			assert.equal(await Registry.getValue(PATH, 'reg-mode'), 'reg64bit')
-			assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
+			await Registry.set(SUBPATH, {bits: 32})
+			await Registry.set(SUBPATH, {bits: 32, isOptions: true})
+
+			assert.equal(await getValue(SUBPATH, 'bits'), 32)
+			assert.isTrue(await hasKey(SUBPATH_32BIT))
+			assert.notEqual(await getValue(SUBPATH_32BIT, 'bits'), 32)
+		})
+
+		it(`last argument can be explicitly marked as options object (three arguments)`, async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
+
+			var SUBKEY = 'deep-subpath'
+			var SUBPATH = `${PATH}\\isOptions-tests`
+			var SUBPATH_FULL = `${SUBPATH}\\${SUBKEY}`
+			var SUBPATH_32BIT = `${PATH_32BIT}\\isOptions-tests`
+
+			await Registry.delete(SUBPATH)
+			await Registry.delete(SUBPATH_32BIT)
+
+			await Registry.set(SUBPATH, SUBKEY, {bits: 32})
+			await Registry.set(SUBPATH, SUBKEY, {bits: 32, isOptions: true})
+
+			assert.equal(await getValue(SUBPATH_FULL, 'bits'), 32)
+			assert.isTrue(await hasValue(SUBPATH_32BIT), SUBKEY)
+			assert.notEqual(await getValue(SUBPATH_32BIT, 'bits'), 32)
 		})
 
 
@@ -1189,26 +1341,26 @@ describe('Registry static', () => {
 	describe('.clearValues', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.clearValues)
+			assert.isFunction(clearValues)
 		})
 
 		it('deletes all values at given path, except for the default one', async () => {
 			await Registry.set(PATH, '', 'Experience tranquility')
 			await Registry.set(PATH, 'val1', 'Embrace the Iris')
-			//assert.isTrue(await Registry.hasKey(PATH))
-			//assert.isTrue(await Registry.hasValue(PATH, ''))
-			//assert.isTrue(await Registry.hasValue(PATH, 'val1'))
-			await Registry.clearValues(PATH)
-			assert.isTrue(await Registry.hasKey(PATH))
-			assert.isTrue(await Registry.hasValue(PATH, ''))
-			assert.isFalse(await Registry.hasValue(PATH, 'val1'))
-			assert.equal(Object.keys(await Registry.getValues(PATH)).length, 0)
+			//assert.isTrue(await hasKey(PATH))
+			//assert.isTrue(await hasValue(PATH, ''))
+			//assert.isTrue(await hasValue(PATH, 'val1'))
+			await clearValues(PATH)
+			assert.isTrue(await hasKey(PATH))
+			assert.isTrue(await hasValue(PATH, ''))
+			assert.isFalse(await hasValue(PATH, 'val1'))
+			assert.equal(Object.keys(await getValues(PATH)).length, 0)
 		})
 
 		it('retains subkeys', async () => {
-			await Registry.setKey(PATH + '\\subkey')
-			await Registry.clearValues(PATH)
-			assert.notEqual((await Registry.getKeys(PATH)).length, 0)
+			await setKey(`${PATH}\\subkey`)
+			await clearValues(PATH)
+			assert.notEqual((await getKeys(PATH)).length, 0)
 		})
 
 	})
@@ -1217,13 +1369,13 @@ describe('Registry static', () => {
 	describe('.clearKeys', () => {
 
 		it('is function', async () => {
-			assert.isFunction(Registry.clearKeys)
+			assert.isFunction(clearKeys)
 		})
 
 		it('deletes all subkeys', async () => {
 			await Registry.set(PATH + '\\subpath', 'val1', 'Embrace the Iris')
-			await Registry.clearKeys(PATH)
-			assert.equal(Object.keys(await Registry.getKeys(PATH)).length, 0)
+			await clearKeys(PATH)
+			assert.equal(Object.keys(await getKeys(PATH)).length, 0)
 		})
 
 	})
@@ -1253,64 +1405,64 @@ describe('Registry static', () => {
 
 		function createBeforeAndAfter() {
 			before(async () => {
-				await Registry.deleteKey(PATH2).catch(noop)
-				await Registry.setKey(PATH2)
+				await deleteKey(PATH2).catch(noop)
+				await setKey(PATH2)
 			})
-			after(() => Registry.deleteKey(PATH2))
+			after(() => deleteKey(PATH2))
 		}
 
 		describe(`new key creation also creates default value with undefined data`, () => {
 			createBeforeAndAfter()
 			it('.getValue returns undefined', async () => {
-				assert.equal(await Registry.getValue(PATH2, ''), undefined)
+				assert.equal(await getValue(PATH2, ''), undefined)
 			})
 			it('.hasValue does not throw', async () => {
-				assert.isTrue(await Registry.hasValue(PATH2, ''))
+				assert.isTrue(await hasValue(PATH2, ''))
 			})
 			it('.getValues includes it', async () => {
-				assert.notEqual((await Registry.getValues(PATH2, false)).length, 0)
+				assert.notEqual((await getValues(PATH2, false)).length, 0)
 			})
 		})
 
 		describe(`no data`, () => {
 			createBeforeAndAfter()
 			it('.getValue returns undefined', async () => {
-				await Registry.deleteValue(PATH2, '')
-				assert.equal(await Registry.getValue(PATH2, ''), undefined)
+				await deleteValue(PATH2, '')
+				assert.equal(await getValue(PATH2, ''), undefined)
 			})
 			it('.hasValue does not throw', async () => {
-				assert.isTrue(await Registry.hasValue(PATH2, ''))
+				assert.isTrue(await hasValue(PATH2, ''))
 			})
 			it('.getValues does not include it', async () => {
-				assert.equal((await Registry.getValues(PATH2, {format: 'complex'})).length, 0)
+				assert.equal((await getValues(PATH2, {format: 'complex'})).length, 0)
 			})
 		})
 
 		describe(`setting data to empty string`, () => {
 			createBeforeAndAfter()
 			it('.getValue returns empty string', async () => {
-				await Registry.setValue(PATH2, '', '')
-				assert.equal(await Registry.getValue(PATH2, ''), '')
+				await setValue(PATH2, '', '')
+				assert.equal(await getValue(PATH2, ''), '')
 			})
 			it('.hasValue does not throw', async () => {
-				assert.isTrue(await Registry.hasValue(PATH2, ''))
+				assert.isTrue(await hasValue(PATH2, ''))
 			})
 			it('.getValues includes it', async () => {
-				assert.notEqual((await Registry.getValues(PATH2, {format: 'complex'})).length, 0)
+				assert.notEqual((await getValues(PATH2, {format: 'complex'})).length, 0)
 			})
 		})
 
 		describe(`setting data to string`, () => {
 			createBeforeAndAfter()
 			it('.getValue returns the string', async () => {
-				await Registry.setValue(PATH2, '', 'harmony')
-				assert.equal(await Registry.getValue(PATH2, ''), 'harmony')
+				await setValue(PATH2, '', 'harmony')
+				assert.equal(await getValue(PATH2, ''), 'harmony')
 			})
 			it('.hasValue does not throw', async () => {
-				assert.isTrue(await Registry.hasValue(PATH2, ''))
+				assert.isTrue(await hasValue(PATH2, ''))
 			})
 			it('.getValues includes it', async () => {
-				assert.notEqual((await Registry.getValues(PATH2, {format: 'complex'})).length, 0)
+				assert.notEqual((await getValues(PATH2, {format: 'complex'})).length, 0)
 			})
 		})
 
@@ -1321,24 +1473,56 @@ describe('Registry static', () => {
 
 		after(() => {
 			Registry.format = 'simple'
-			Registry.bits = undefined
+			delete Registry.bits
 		})
 
 		it(`Registry.format = 'complex' is used for all calls`, async () => {
-			assert.isObject(await Registry.getValues('HKCR\\*'))
-			assert.isArray(await Registry.getValues('HKCR\\*', {format: 'complex'}))
+			assert.isObject(await getValues('HKCR\\*'))
+			assert.isArray(await getValues('HKCR\\*', {format: 'complex'}))
 			Registry.format = 'complex'
-			assert.isArray(await Registry.getValues('HKCR\\*'))
+			assert.isArray(await getValues('HKCR\\*'))
 			Registry.format = 'simple'
 		})
 
 		it(`Registry.format can by bypassed by specifying custom options`, async () => {
 			Registry.format = 'complex'
-			assert.isArray(await Registry.getValues('HKCR\\*'))
-			assert.isObject(await Registry.getValues('HKCR\\*', {format: 'simple'}))
+			assert.isArray(await getValues('HKCR\\*'))
+			assert.isObject(await getValues('HKCR\\*', {format: 'simple'}))
 		})
 
-		// TODO: Registry.bits = 32
+		// it(`Registry.bits is used for all calls`, async () => {
+		// 	assert.isOk(isNode64bit, isNode64bitMsg)
+
+		// 	var NAME = 'global-bits'
+
+		// 	await Registry.delete(PATH)
+		// 	await Registry.delete(PATH_32BIT)
+
+		// 	Registry.bits = 32
+		// 	await Registry.set(PATH, NAME, '32b')
+		// 	Registry.bits = 64
+		// 	await Registry.set(PATH, NAME, '64b')
+		// 	Registry.bits = undefined
+
+		// 	assert.equal(await getValue(PATH, NAME), '64b')
+		// 	assert.equal(await getValue(PATH_32BIT, NAME), '32b')
+		// })
+
+		// it(`Registry.bits can by bypassed by specifying custom options`, async () => {
+		// 	assert.isOk(isNode64bit, isNode64bitMsg)
+
+		// 	var NAME = 'bypassing-global-bits'
+
+		// 	await Registry.delete(PATH)
+		// 	await Registry.delete(PATH_32BIT)
+
+		// 	Registry.bits = 32
+		// 	await Registry.set(PATH, NAME, '', {bits: 64})
+		// 	Registry.bits = undefined
+
+		// 	assert.isTrue(await hasValue(PATH, NAME))
+		// 	assert.isFalse(await hasValue(PATH_32BIT, NAME))
+		// })
 
 	})
 
@@ -1566,7 +1750,7 @@ describe('new Registry', () => {
 	//
 	// 		assert.equal(await reg64.get('reg-mode'), 'reg64bit')
 	// 		assert.equal(await reg32.get('reg-mode'), 'reg32bit')
-	// 		assert.equal(await Registry.getValue(PATH_32BIT, 'reg-mode', {bits: 64}), 'reg32bit')
+	// 		assert.equal(await getValue(PATH_32BIT, 'reg-mode', {bits: 64}), 'reg32bit')
 	// 	})
 	//
 	// })

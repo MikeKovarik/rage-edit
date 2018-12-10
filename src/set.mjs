@@ -1,4 +1,4 @@
-import {execute, sanitizePath, getOptions, inferAndStringifyData, sanitizeType, bitsToArg} from './util.mjs'
+import {execute, getOptions, inferAndStringifyData, sanitizeType, isObject, debug} from './util.mjs'
 import {TYPES} from './constants.mjs'
 import {Registry} from './Registry.mjs'
 
@@ -11,58 +11,58 @@ Registry.prototype.set = function(...args) {
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.set = function(path, arg2, ...args) {
-	// Nothing but path is passed
-	if (arg2 === undefined)
-		return Registry.setKey(path)
-	// If second argument is null or false, pass the third one to 'setKey'
-	//   (it's probably an options object)
-	else if (arg2 === false || arg2 === null)
-		return Registry.setKey(path, args[0])
+Registry.set = async function(...args) {
+	debug('[set.set]', args)
+	// Workaround that allows to use last argument as a data object, not options object
+	//   by appending an empty object to the args list.
+	// To specify last object as an options object, 'isOptions: true' should be added:
+	//   Registry.set(path, 'Value name', {bits: 32, isOptions: true})
+	var lastArg = args[args.length - 1]
+	if ((args.length === 2 || args.length === 3) && isObject(lastArg) && !lastArg.isOptions) {
+		args.push({})
+	}
+	var options = getOptions(args)
+	if (options.name !== undefined)
+		return Registry.setValue(options)
 	else
-		return Registry.setValue(path, arg2, ...args)
+		return Registry.setKey(options)
 }
 
 
 // Creates a key at given path.  Does nothing if the key already exists.
-Registry.setKey = async function(path, options) {
-	// Allow both forwardslashes and backslashes
-	path = sanitizePath(path)
-	// Populate options with default values
-	options = getOptions(options)
+Registry.setKey = async function({path, bits}) {
+	debug('[set.setKey]', {path, bits})
+	var addArgs = ['add', path, '/f']
+	var delArgs = ['delete', path, '/ve', '/f']
+	if (bits) {
+		addArgs.push(bits)
+		delArgs.push(bits)
+	}
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
-	await execute(['add', path, '/f', bitsToArg(options.bits)])
+	await execute(addArgs)
 	// 'reg.exe add' always creates/overrides '(default)' item with empty string (not undefined value). This command makes '(default)' undefined.
-	await execute(['delete', path, '/ve', '/f', bitsToArg(options.bits)])
+	await execute(delArgs)
 }
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.setValue = async function(path, name, data, type, options) {
-	// Allow both forwardslashes and backslashes
-	path = sanitizePath(path)
+Registry.setValue = async function({path, name, data, type, bits}) {
+	debug('[set.setValue]', {path, name, data, type, bits})
 	// 'name' argument can only be string, otherwise it's and object of values and possible nested subkeys.
 	if (typeof name !== 'string') {
 		data = name
 		name = undefined
 	}
-	// 'type' argument can only be string, otherwise it's a settings object.
-	if (typeof type !== 'string') {
-		options = type
-		type = undefined
-	}
-	// Populate options with default values
-	options = getOptions(options)
-	// Arguments: path, name[, data[, type][, options]]]
-	return _setValue(path, name, data, type, options)
+	return _setValue(path, name, data, type, bits)
 }
-async function _setValue(path, name, data = '', type, options) {
+async function _setValue(path, name, data = '', type, bits) {
+	debug('[set._setValue]', {path, name, data, type, bits})
 	if (isObject(data)) {
 		if (name)
 			path += `\\${name}`
 		var promises = Object.keys(data)
-			.map(name => _setValue(path, name, data[name], undefined, options))
+			.map(name => _setValue(path, name, data[name], undefined, bits))
 		return Promise.all(promises)
 	}
 	// Uppercase and make sure the type starts with REG_
@@ -86,23 +86,10 @@ async function _setValue(path, name, data = '', type, options) {
 		args.push('/d', data)
 	// Forces potential overwrite without prompting.
 	args.push('/f')
-	// Set mode (32bit or 64 bit) if needed
-	args.push(bitsToArg(options.bits))
+	// Set mode (32bit/64bit) if needed
+	if (bits)
+	  args.push(bits)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(args)
-}
-
-
-function isArrayLike(something) {
-	if (something === undefined)
-		 return false
-	return Array.isArray(something)
-		|| Buffer.isBuffer(something)
-		|| something.constructor === Uint8Array
-		//|| something.constructor === ArrayBuffer
-}
-
-function isObject(something) {
-	return typeof something === 'object' && !isArrayLike(something)
 }
