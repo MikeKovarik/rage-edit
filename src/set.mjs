@@ -47,22 +47,18 @@ Registry.setKey = async function({path, bitsArg}) {
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.setValue = async function({path, name, data, type, bitsArg}) {
+Registry.setValue = async function({path, name, data = '', type, bitsArg}) {
 	debug('[set.setValue]', {path, name, data, type, bitsArg})
 	// 'name' argument can only be string, otherwise it's and object of values and possible nested subkeys.
 	if (typeof name !== 'string') {
 		data = name
 		name = undefined
 	}
-	return _setValue(path, name, data, type, bitsArg)
-}
-async function _setValue(path, name, data = '', type, bitsArg) {
-	debug('[set._setValue]', {path, name, data, type, bitsArg})
 	if (isObject(data)) {
 		if (name)
 			path += `\\${name}`
 		var promises = Object.keys(data)
-			.map(name => _setValue(path, name, data[name], undefined, bitsArg))
+			.map(name => Registry.setValue({path, name, data: data[name], bitsArg}))
 		return Promise.all(promises)
 	}
 	// Uppercase and make sure the type starts with REG_
