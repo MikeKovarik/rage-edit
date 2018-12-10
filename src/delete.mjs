@@ -33,11 +33,11 @@ Registry.clear = async function(...args) {
 
 
 // Deletes the registry key and all of its subkeys and values
-Registry.deleteKey = async function({path, bits}) {
-	debug('[delete.deleteKey]', {path, bits})
+Registry.deleteKey = async function({path, bitsArg}) {
+	debug('[delete.deleteKey]', {path, bitsArg})
 	var execArgs = ['delete', path, '/f']
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(execArgs)
@@ -45,8 +45,8 @@ Registry.deleteKey = async function({path, bits}) {
 
 
 // Deletes single value entry inside the key (or default value if no name given).
-Registry.deleteValue = async function({path, name, bits}) {
-	debug('[delete.deleteValue]', {path, name, bits})
+Registry.deleteValue = async function({path, name, bitsArg}) {
+	debug('[delete.deleteValue]', {path, name, bitsArg})
 	if (name === undefined) {
 		name = Registry.DEFAULT
 	}
@@ -54,8 +54,8 @@ Registry.deleteValue = async function({path, name, bits}) {
 		var execArgs = ['delete', path, '/ve', '/f']
 	else
 		var execArgs = ['delete', path, '/v', name, '/f']
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(execArgs)
@@ -64,11 +64,11 @@ Registry.deleteValue = async function({path, name, bits}) {
 
 
 // Deletes all values inside the key. Preserves the key iteself and its subkeys.
-Registry.clearValues = async function({path, bits}) {
-	debug('[delete.clearValues]', {path, bits})
+Registry.clearValues = async function({path, bitsArg}) {
+	debug('[delete.clearValues]', {path, bitsArg})
 	var execArgs = ['delete', path, '/va', '/f']
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(execArgs)
@@ -80,6 +80,6 @@ Registry.clearKeys = async function(options) {
 	debug('[delete.clearKeys]', options)
 	// Get list of keys and delete them one by one
 	var keys = await Registry.getKeys(options)
-	var promises = keys.map(key => Registry.delete(`${options.path}\\${key}`, options.bits))
+	var promises = keys.map(key => Registry.delete(`${options.path}\\${key}`, options.bitsArg))
 	await Promise.all(promises)
 }

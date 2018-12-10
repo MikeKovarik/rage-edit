@@ -8,7 +8,7 @@ import { debug } from './util.mjs';
 export class Registry {
 
 	constructor(path, options) {
-		debug('[new Registry()]', {path, options})
+		debug('[new Registry()] -->', {path, options})
 		path = sanitizePath(path)
 		if (path.endsWith('\\'))
 			path = path.slice(-1)
@@ -18,13 +18,15 @@ export class Registry {
 		if (!HIVES.includes(this.hive))
 			throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
 		this.hiveLong = extendHive(hive)
-		this.options = Object.assign({}, Registry.options, options)
+		this.options = getOptions([options])
+		this.options.isOptions = true
+		debug('[new Registry()] <--', this)
 	}
 
 	_formatArgs(args) {
+		var options = Object.assign({}, this.options)
 		if (args.length === 0)
-			return [this.path]
-		// TODO: simplified, lowercase, args
+			return [this.path, options]
 		var firstArg = sanitizePath(args[0])
 		if (firstArg.startsWith('.\\'))
 			args[0] = this.path + firstArg.slice(1)
@@ -32,6 +34,7 @@ export class Registry {
 			args[0] = this.path + firstArg
 		else
 			args.unshift(this.path)
+		args.push(options)
 		return args
 	}
 

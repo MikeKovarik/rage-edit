@@ -30,13 +30,13 @@ Registry.set = async function(...args) {
 
 
 // Creates a key at given path.  Does nothing if the key already exists.
-Registry.setKey = async function({path, bits}) {
-	debug('[set.setKey]', {path, bits})
+Registry.setKey = async function({path, bitsArg}) {
+	debug('[set.setKey]', {path, bitsArg})
 	var addArgs = ['add', path, '/f']
 	var delArgs = ['delete', path, '/ve', '/f']
-	if (bits) {
-		addArgs.push(bits)
-		delArgs.push(bits)
+	if (bitsArg) {
+		addArgs.push(bitsArg)
+		delArgs.push(bitsArg)
 	}
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
@@ -47,22 +47,22 @@ Registry.setKey = async function({path, bits}) {
 
 
 // Creates or overwrites value entry at given inside a key.
-Registry.setValue = async function({path, name, data, type, bits}) {
-	debug('[set.setValue]', {path, name, data, type, bits})
+Registry.setValue = async function({path, name, data, type, bitsArg}) {
+	debug('[set.setValue]', {path, name, data, type, bitsArg})
 	// 'name' argument can only be string, otherwise it's and object of values and possible nested subkeys.
 	if (typeof name !== 'string') {
 		data = name
 		name = undefined
 	}
-	return _setValue(path, name, data, type, bits)
+	return _setValue(path, name, data, type, bitsArg)
 }
-async function _setValue(path, name, data = '', type, bits) {
-	debug('[set._setValue]', {path, name, data, type, bits})
+async function _setValue(path, name, data = '', type, bitsArg) {
+	debug('[set._setValue]', {path, name, data, type, bitsArg})
 	if (isObject(data)) {
 		if (name)
 			path += `\\${name}`
 		var promises = Object.keys(data)
-			.map(name => _setValue(path, name, data[name], undefined, bits))
+			.map(name => _setValue(path, name, data[name], undefined, bitsArg))
 		return Promise.all(promises)
 	}
 	// Uppercase and make sure the type starts with REG_
@@ -86,9 +86,9 @@ async function _setValue(path, name, data = '', type, bits) {
 		args.push('/d', data)
 	// Forces potential overwrite without prompting.
 	args.push('/f')
-	// Set mode (32bit/64bit) if needed
-	if (bits)
-	  args.push(bits)
+	// Set 32bit/64bit mode if needed
+	if (bitsArg)
+	  args.push(bitsArg)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
 	//       Only await the process to finish. If any error occurs, the thrown error will bubble up.
 	await execute(args)

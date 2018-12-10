@@ -33,14 +33,14 @@ Registry.has = function(...args) {
 }
 
 
-Registry.getKey = async function({path, recursive, bits, format, lowercase}) {
-	debug('[get.getKey]', {path, recursive, bits, format, lowercase})
+Registry.getKey = async function({path, recursive, bitsArg, format, lowercase}) {
+	debug('[get.getKey]', {path, recursive, bitsArg, format, lowercase})
 	if (recursive)
 		var execArgs = ['query', path, '/s']
 	else
 		var execArgs = ['query', path]
-	if (bits)
-	  execArgs.push(bits)
+	if (bitsArg)
+	  execArgs.push(bitsArg)
 	var result = await execute(execArgs)
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
@@ -81,8 +81,8 @@ Registry.getKey = async function({path, recursive, bits, format, lowercase}) {
 
 // returns single value
 // Warning: 'reg' command is case insensitive and value names in the results are as well.
-Registry.getValue = async function({path, name, bits, format, lowercase}) {
-	debug('[get.getValue]', {path, name, bits, format, lowercase})
+Registry.getValue = async function({path, name, bitsArg, format, lowercase}) {
+	debug('[get.getValue]', {path, name, bitsArg, format, lowercase})
 	// If name is ommited, it will be considered as 'default' registry value
 	if (name === undefined)
 		name = Registry.DEFAULT
@@ -91,8 +91,8 @@ Registry.getValue = async function({path, name, bits, format, lowercase}) {
 		var execArgs = ['query', path, '/ve']
 	else
 		var execArgs = ['query', path, '/v', name]
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	var result = await execute(execArgs)
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
@@ -111,12 +111,12 @@ Registry.getValue = async function({path, name, bits, format, lowercase}) {
 
 
 // Returns an array of subkeys (or their full paths).
-Registry.getKeys = async function({path, bits, format, lowercase}) {
-	debug('[get.getKeys]', {path, bits, format, lowercase})
+Registry.getKeys = async function({path, bitsArg, format, lowercase}) {
+	debug('[get.getKeys]', {path, bitsArg, format, lowercase})
 	// Create simple query at given path
 	var execArgs = ['query', path]
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	var result = await execute(execArgs)
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
@@ -141,12 +141,12 @@ Registry.getKeys = async function({path, bits, format, lowercase}) {
 }
 
 
-Registry.getValues = async function({path, bits, format, lowercase}) {
-	debug('[get.getValues]', {path, bits, format, lowercase})
+Registry.getValues = async function({path, bitsArg, format, lowercase}) {
+	debug('[get.getValues]', {path, bitsArg, format, lowercase})
 	// Create simple query at given path
 	var execArgs = ['query', path]
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	var result = await execute(execArgs)
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
@@ -167,12 +167,12 @@ Registry.getValues = async function({path, bits, format, lowercase}) {
 
 
 // Returns true if a key at the path exists
-Registry.hasKey = function({path, bits}) {
-	debug('[get.hasKey]', {path, bits})
+Registry.hasKey = function({path, bitsArg}) {
+	debug('[get.hasKey]', {path, bitsArg})
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	var execArgs = ['query', path]
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	// 'false' argument disables suppression of not found errors for simpler handling (with catch statement).
 	return execute(execArgs)
 		.then(result => result === undefined ? false : true)
@@ -180,8 +180,8 @@ Registry.hasKey = function({path, bits}) {
 
 
 // Returns true if a value at the path exists
-Registry.hasValue = async function({path, name, bits}) {
-	debug('[get.hasKey]', {path, name, bits})
+Registry.hasValue = async function({path, name, bitsArg}) {
+	debug('[get.hasKey]', {path, name, bitsArg})
 	// If name is ommited, it will be considered as 'default' registry value
 	if (name === undefined)
 		name = Registry.DEFAULT
@@ -190,8 +190,8 @@ Registry.hasValue = async function({path, name, bits}) {
 		var execArgs = ['query', path, '/ve']
 	else
 		var execArgs = ['query', path, '/v', name]
-	if (bits)
-		execArgs.push(bits)
+	if (bitsArg)
+		execArgs.push(bitsArg)
 	var result = await execute(execArgs)
 	if (result === undefined) return false
 	// Default value name is represented by a word default in brackets.

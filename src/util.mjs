@@ -225,19 +225,23 @@ export function getOptions(args = []) {
 		userOptions = args.pop()
 	else if (isObject(args[args.length - 1]))
 		userOptions = args.pop()
-	// var [path, name, data, type] = args
+	// Destructure arguments
 	var [path, name, data] = args
-	// Allow both forward slashes and backslashes
-	if (path)
-		path = sanitizePath(path)
-	// Populate 'options' with missing default values
+	// Get default values
 	var {lowercase, format, bits} = Registry
-	var options = {lowercase, format, bits}
-	Object.assign(options, userOptions)
-	// Convert 'bits' value to 'reg.exe' argument
-	options.bits = bitsToArg(options.bits)
-	// Merge options object and arguments into single object
-	options = Object.assign({}, {path, name, data}, options)
+	// Path, name, and data passed as args can be overridden
+	//   with the same named options passed in options obejct.
+	var defaultOptions = {lowercase, format, bits, path, name, data}
+	// Merge default options with user options
+	var options = Object.assign({}, defaultOptions, userOptions)
+	// Allow both forward slashes and backslashes
+	if (options.path)
+		options.path = sanitizePath(options.path)
+	// Convert 'bits' value to a valid 'reg.exe' argument
+	if (options.bits)
+		options.bitsArg = bitsToArg(options.bits)
+	// Remove all 'undefined' options
+	Object.keys(options).forEach((key) => (options[key] == undefined) && delete options[key])
 	debug('[util.getOptions] <--', options)
 	return options
 }

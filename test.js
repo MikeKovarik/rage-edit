@@ -46,10 +46,17 @@ var clearValues = (...args) => Registry.clearValues(getOpts(...args))
 var setKey = (...args) => Registry.setKey(getOpts(...args))
 var setValue = (...args) => Registry.setValue(getOpts(...args))
 
+async function cleanUpRegistry() {
+	await Registry.delete(PATH)
+	await Registry.delete(PATH_32BIT)
+	await Registry.delete(OW_PATH)
+}
+
 // Registry.debug = true
 
 describe('Registry static', () => {
 
+	after(cleanUpRegistry)
 
 	describe('Internal', () => {
 
@@ -73,13 +80,13 @@ describe('Registry static', () => {
 				assert.equal(backslashes, forwardslashes)
 			})
 
-			it('allows both forwardslashes and backslashes', async () => {
-				var bits64 = getOpts({bits: 64}).bits
-				var bits32 = getOpts({bits: 32}).bits
-				var bitsNull = getOpts({bits: 47}).bits
+			it(`converts 'bits' to 'bitsArgs `, async () => {
+				var bits64 = getOpts({bits: 64}).bitsArg
+				var bits32 = getOpts({bits: 32}).bitsArg
+				var bitsNull = getOpts({bits: 47}).bitsArg
 				assert.equal(bits64, '/reg:64')
 				assert.equal(bits32, '/reg:32')
-				assert.equal(bitsNull, null)
+				assert.equal(bitsNull, undefined)
 			})
 
 			it('converts arguments in proper order', async () => {
@@ -1526,7 +1533,6 @@ describe('Registry static', () => {
 
 	})
 
-
 })
 
 
@@ -1534,6 +1540,7 @@ describe('Registry static', () => {
 describe('new Registry', () => {
 
 	var reg = new Registry(OW_PATH)
+	after(cleanUpRegistry)
 
 
 	describe('._formatArgs', () => {
@@ -1735,24 +1742,25 @@ describe('new Registry', () => {
 
 	})
 
+	// TODO: tests for such options as 'lowercase' and 'format'
 
-	// describe('{mode}', () => {
-	//
-	// 	it('works with 32 and 64 bit registry views', async () => {
-	// 		await Registry.delete(PATH)
-	// 		await Registry.delete(PATH_32BIT)
-	//
-	// 		var reg64 = new Registry(PATH, {bits: 64})
-	// 		var reg32 = new Registry(PATH, {bits: 32})
-	//
-	// 		await reg64.set('reg-mode', 'reg64bit')
-	// 		await reg32.set('reg-mode', 'reg32bit')
-	//
-	// 		assert.equal(await reg64.get('reg-mode'), 'reg64bit')
-	// 		assert.equal(await reg32.get('reg-mode'), 'reg32bit')
-	// 		assert.equal(await getValue(PATH_32BIT, 'reg-mode', {bits: 64}), 'reg32bit')
-	// 	})
-	//
-	// })
+	describe('{mode}', () => {
+	
+		it('works with 32 and 64 bit registry views', async () => {
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+	
+			var reg64 = new Registry(PATH, {bits: 64})
+			var reg32 = new Registry(PATH, {bits: 32})
+	
+			await reg64.set('reg-mode', 'reg64bit')
+			await reg32.set('reg-mode', 'reg32bit')
+	
+			assert.equal(await reg64.get('reg-mode'), 'reg64bit')
+			assert.equal(await reg32.get('reg-mode'), 'reg32bit')
+			assert.equal(await getValue(PATH_32BIT, 'reg-mode', {bits: 64}), 'reg32bit')
+		})
+	
+	})
 
 })
