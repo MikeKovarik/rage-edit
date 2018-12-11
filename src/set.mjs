@@ -15,10 +15,13 @@ Registry.set = async function(...args) {
 	debug('[set.set]', args)
 	// Workaround that allows to use last argument as a data object, not options object
 	//   by appending an empty object to the args list.
-	// To specify last object as an options object, 'isOptions: true' should be added:
-	//   Registry.set(path, 'Value name', {bits: 32, isOptions: true})
+	// To specify last object as an options object, '$isOptions: true' should be added:
+	//   Registry.set(path, 'Value name', {bits: 32, $isOptions: true})
 	var lastArg = args[args.length - 1]
-	if ((args.length === 2 || args.length === 3) && isObject(lastArg) && !lastArg.isOptions) {
+	if ((args.length === 2 || args.length === 3)
+		&& isObject(lastArg)
+		&& !lastArg[Registry.IS_OPTIONS]
+	) {
 		args.push({})
 	}
 	var options = getOptions(args)

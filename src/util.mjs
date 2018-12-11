@@ -221,8 +221,11 @@ export function getOptions(args = []) {
 	debug('[util.getOptions] -->', args)
 	// Parse arguments
 	var userOptions = {}
-	if (args.length === 1 && isObject(args[0]))
+	if (args.length === 1 && isObject(args[0])) {
 		userOptions = args.pop()
+		// Explicitly mark first object as an options object
+		userOptions[Registry.IS_OPTIONS] = true
+	}
 	else if (isObject(args[args.length - 1]))
 		userOptions = args.pop()
 	// Destructure arguments

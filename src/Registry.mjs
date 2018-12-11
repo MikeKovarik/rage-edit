@@ -19,12 +19,11 @@ export class Registry {
 			throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
 		this.hiveLong = extendHive(hive)
 		this.options = getOptions([options])
-		this.options.isOptions = true
 		debug('[new Registry()] <--', this)
 	}
 
 	_formatArgs(args) {
-		var options = Object.assign({}, this.options)
+		var options = Object.assign({}, this.options, {[Registry.IS_OPTIONS]: true})
 		if (args.length === 0)
 			return [this.path, options]
 		var firstArg = sanitizePath(args[0])
@@ -72,6 +71,7 @@ export class Registry {
 // Needed for tests only
 Registry._argsToOpts = (...args) => getOptions(args)
 
+Registry.IS_OPTIONS = '$isOptions'
 Registry.VALUES = '$values'
 Registry.DEFAULT = ''
 

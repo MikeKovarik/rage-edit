@@ -1315,7 +1315,7 @@ describe('Registry static', () => {
 			await Registry.delete(SUBPATH_32BIT)
 
 			await Registry.set(SUBPATH, {bits: 32})
-			await Registry.set(SUBPATH, {bits: 32, isOptions: true})
+			await Registry.set(SUBPATH, {bits: 32, [Registry.IS_OPTIONS]: true})
 
 			assert.equal(await getValue(SUBPATH, 'bits'), 32)
 			assert.isTrue(await hasKey(SUBPATH_32BIT))
@@ -1334,7 +1334,7 @@ describe('Registry static', () => {
 			await Registry.delete(SUBPATH_32BIT)
 
 			await Registry.set(SUBPATH, SUBKEY, {bits: 32})
-			await Registry.set(SUBPATH, SUBKEY, {bits: 32, isOptions: true})
+			await Registry.set(SUBPATH, SUBKEY, {bits: 32, [Registry.IS_OPTIONS]: true})
 
 			assert.equal(await getValue(SUBPATH_FULL, 'bits'), 32)
 			assert.isTrue(await hasValue(SUBPATH_32BIT), SUBKEY)
