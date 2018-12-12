@@ -112,6 +112,8 @@ class RegError extends Error {
 export function inferAndStringifyData(data, type) {
 	if (data === undefined || data === null)
 		return [data, type]
+  // Prevents old node.js versions from crashing
+	var BigIntConstructor = (typeof BigInt === "function") ? BigInt : undefined
 	switch (data.constructor) {
 		// Convert Buffer data into string and infer type to REG_BINARY if none was specified.
 		case Uint8Array:
@@ -136,6 +138,11 @@ export function inferAndStringifyData(data, type) {
 			if (type === undefined)
 				type = DWORD
 			break
+		case BigIntConstructor:
+			// Set REG_QWORD type if none is specified.
+			if (type === undefined)
+				type = QWORD
+			break
 		case String:
 		//default:
 			// Set REG_SZ type if none is specified.
@@ -159,8 +166,8 @@ export function parseValueData(data, type) {
 		data = Buffer.from(data, 'hex')
 	if (type === DWORD)
 		data = parseInt(data)
-	//if (type === QWORD && convertQword)
-	//	data = parseInt(data)
+	if (type === QWORD && (typeof BigInt === "function"))
+		data = BigInt(data)
 	if (type === MULTI_SZ)
 		data = data.split('\\0')
 	return [data, type]

@@ -63,6 +63,7 @@ Value type. This option is actual in the [.set() method](#method.set) only. If `
 |-|-|
 |`String`|`REG_SZ`, `REG_EXPAND_SZ`|
 |`Number`|`REG_DWORD`|
+|`BigInt`|`REG_QWORD`|
 |`Array<String>`|`REG_MULTI_SZ`|
 |`Buffer`, `Uint8Array`, `ArrayBuffer`|`REG_BINARY`|
 
@@ -236,7 +237,9 @@ If `name` is set, the specified name will be returned. In order to work with `(D
 
 `undefined` is returned if either `path` or `name` doesn't exist.
 
-Read value is automatically converted into matching JS type according with a table from [`type` section](#options.type). If you try to read **REG_QWORD** value, it won't be converted due to JS limitations (QWORD value is 64 bit while JS `Number` only supports 53 bit integers). The `reg` command also retrieves values in hex `Ox` notation and `rage-edit` does not change that.
+Read value is automatically converted into matching JS type according with a table from [`type` section](#options.type).
+
+**Note**: `REG_QWORD` values are regarded as `BigInt`s if your environment supports them (Node.js v10 / Chromium 67), otherwise value in hex `0x` notation is returned. In other words, `REG_QWORD 0x000004d2 (1234)` value is read as `1234n` in node.js v10+ and as `'0x4D2'` in node.js v9-.
 
 ### Examples:
 ```js
@@ -312,18 +315,6 @@ Read value is automatically converted into matching JS type according with a tab
 -> await Registry.get('HKLM/SOFTWARE/Fake path')
 -> await Registry.get('HKLM/SOFTWARE/Example', 'Something that does not exist')
 <- undefined
-```
-```js
-// REG_DWORD and REG_QWORD
- 
--> Registry.set('HKLM/SOFTWARE/Example', 'DwordValue', 1234, { type: 'REG_DWORD' })
--> Registry.set('HKLM/SOFTWARE/Example', 'QwordValue', 1234, { type: 'REG_QWORD' })
-
--> Registry.get('HKLM/SOFTWARE/Example', 'DwordValue')
-<- 1234
-
--> Registry.get('HKLM/SOFTWARE/Example', 'QwordValue')
-<- '0x4D2'
 ```
 
 ## <a name="method.has"></a>.has([path[, name]][, options])

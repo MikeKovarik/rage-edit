@@ -461,23 +461,33 @@ describe('Registry static', () => {
 				assert.isNumber(await getValue(PATH, NAME))
 			})
 
-			it('reads REG_QWORD as string in 0x format', async () => {
+			it('reads REG_QWORD as BigInt', async () => {
 				var NAME = 'casting-3'
 				await setValue(PATH, NAME, 1234, {type: 'REG_QWORD'})
 				var data = await getValue(PATH, NAME)
+				assert.equal(data.constructor.name, 'BigInt')
+			})
+
+			it('reads REG_QWORD as string in 0x format if BigInt is not supported', async () => {
+				var NAME = 'casting-4'
+				await setValue(PATH, NAME, 1234, {type: 'REG_QWORD'})
+				var BigIntOrginal = BigInt
+				BigInt = undefined
+				var data = await getValue(PATH, NAME)
+				BigInt = BigIntOrginal
 				assert.isString(data)
 				assert.isTrue(data.startsWith('0x'))
 			})
 
 			it('reads REG_BINARY as buffer', async () => {
-				var NAME = 'casting-4'
+				var NAME = 'casting-5'
 				await setValue(PATH, NAME, Buffer.alloc(0), {type: 'REG_BINARY'})
 				var data = await getValue(PATH, NAME)
 				assert.equal(data.constructor.name, 'Buffer')
 			})
 
 			it('reads REG_MULTI_SZ as array', async () => {
-				var NAME = 'casting-4'
+				var NAME = 'casting-6'
 				await setValue(PATH, NAME, [], {type: 'REG_MULTI_SZ'})
 				assert.isArray(await getValue(PATH, NAME))
 			})
@@ -1117,14 +1127,20 @@ describe('Registry static', () => {
 				assert.equal(await getEntryType(NAME), 'REG_DWORD')
 			})
 
-			it('array as REG_MULTI_SZ', async () => {
+			it('bigint as REG_QWORD', async () => {
 				var NAME = 'type-infer-3'
+				await setValue(PATH, NAME, 123n)
+				assert.equal(await getEntryType(NAME), 'REG_QWORD')
+			})
+
+			it('array as REG_MULTI_SZ', async () => {
+				var NAME = 'type-infer-4'
 				await setValue(PATH, NAME, ['one', 'two', 'three'])
 				assert.equal(await getEntryType(NAME), 'REG_MULTI_SZ')
 			})
 
 			it('buffer as REG_BINARY', async () => {
-				var NAME = 'type-infer-4'
+				var NAME = 'type-infer-5'
 				await setValue(PATH, NAME, Buffer.from('Zenyatta'))
 				assert.equal(await getEntryType(NAME), 'REG_BINARY')
 			})
@@ -1157,16 +1173,16 @@ describe('Registry static', () => {
 
 			it('REG_QWORD number', async () => {
 				var NAME = 'value-4'
-				var DATA = 123
+				var DATA = 123n
 				await setValue(PATH, NAME, DATA, {type: 'REG_QWORD'})
-				assert.equal(await getValue(PATH, NAME), '0x' + DATA.toString(16))
+				assert.equal(await getValue(PATH, NAME), DATA)
 			})
 
 			it('REG_QWORD number', async () => {
 				var NAME = 'value-5'
-				var DATA = 123
+				var DATA = 123n
 				await setValue(PATH, NAME, DATA + '', {type: 'REG_QWORD'})
-				assert.equal(await getValue(PATH, NAME), '0x' + DATA.toString(16))
+				assert.equal(await getValue(PATH, NAME), DATA)
 			})
 
 			it('REG_MULTI_SZ array', async () => {
@@ -1202,7 +1218,7 @@ describe('Registry static', () => {
 		})
 
 
-		describe('iput data type override', () => {
+		describe('input data type override', () => {
 
 			it('explicitly stores string as REG_DWORD', async () => {
 				var NAME = 'type-override-1'
