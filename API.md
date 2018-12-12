@@ -184,7 +184,7 @@ await Registry.set({
 })
 
 // Equals to:
-// (Warning: this way is not recommended and showed for demonstration purposes only!
+// (Warning: this is not recommended way of using .set() and showed for demonstration purposes only!
 //  Please stick with one of the ways described above)
 await Registry.set('HKLM/SOFTWARE/Example', {
   $isOptions: true, // Explicitly mark object as options object. Check the '$isOptions' section for details.
@@ -194,7 +194,7 @@ await Registry.set('HKLM/SOFTWARE/Example', {
 })
 
 // Equals to:
-// (Warning: this way is not recommended and showed for demonstration purposes only!
+// (Warning: this is not recommended way of using .set() and showed for demonstration purposes only!
 //  Please stick with one of the ways described above)
 await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', {
   $isOptions: true,
