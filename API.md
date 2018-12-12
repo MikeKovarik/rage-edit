@@ -175,25 +175,29 @@ await Registry.get({
 ```js
 await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', 'content', { type: 'REG_SZ' })
 
-// Equals to (not recommended):
-await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', {
-  $isOptions: true, // Explicitly mark object as options object. Check the '$isOptions' section for details.
-  data: 'content',
-  type: 'REG_SZ'
-})
-
-// Equals to (not recommended):
-await Registry.set('HKLM/SOFTWARE/Example', {
-  $isOptions: true, // Explicitly mark object as options object.
+// Equals to:
+await Registry.set({
+  path: 'HKLM/SOFTWARE/Example',
   name: 'StringVal',
   data: 'content',
   type: 'REG_SZ'
 })
 
 // Equals to:
-await Registry.set({
-  path: 'HKLM/SOFTWARE/Example',
+// (Warning: this way is not recommended and showed for demonstration purposes only!
+//  Please stick with one of the ways described above)
+await Registry.set('HKLM/SOFTWARE/Example', {
+  $isOptions: true, // Explicitly mark object as options object. Check the '$isOptions' section for details.
   name: 'StringVal',
+  data: 'content',
+  type: 'REG_SZ'
+})
+
+// Equals to:
+// (Warning: this way is not recommended and showed for demonstration purposes only!
+//  Please stick with one of the ways described above)
+await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', {
+  $isOptions: true,
   data: 'content',
   type: 'REG_SZ'
 })
