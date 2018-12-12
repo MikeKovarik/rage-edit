@@ -11,15 +11,18 @@ export class Registry {
 		debug('[new Registry()] -->', args)
 		var options = getOptions(args)
 
-		if (options.path.endsWith('\\'))
-			options.path = options.path.slice(-1)
-		this.path = options.path
+		// Path is optional
+		if (options.path) {
+			if (options.path.endsWith('\\'))
+				options.path = options.path.slice(-1)
+			this.path = options.path
 
-		var hive = options.path.split('\\').shift()
-		this.hive = shortenHive(hive)
-		if (!HIVES.includes(this.hive))
-			throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
-		this.hiveLong = extendHive(hive)
+			var hive = options.path.split('\\').shift()
+			this.hive = shortenHive(hive)
+			if (!HIVES.includes(this.hive))
+				throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
+			this.hiveLong = extendHive(hive)
+		}
 
 		this.options = options
 		debug('[new Registry()] <--', this)
@@ -34,15 +37,18 @@ export class Registry {
 			return options
 		}
 
-		if (typeof args[0] == 'string') {
-			args[0] = sanitizePath(args[0])
+		// Path is optional
+		if (this.path) {
+			if (typeof args[0] == 'string') {
+				args[0] = sanitizePath(args[0])
 
-			if (args[0].startsWith('.\\'))
-				args[0] = this.path + args[0].slice(1)
-			else if (args[0].startsWith('\\'))
-				args[0] = this.path + args[0]
-			else
-				args = [this.path, ...args]
+				if (args[0].startsWith('.\\'))
+					args[0] = this.path + args[0].slice(1)
+				else if (args[0].startsWith('\\'))
+					args[0] = this.path + args[0]
+				else
+					args = [this.path, ...args]
+			}
 		}
 
 		// 'false' is for not including default values (such as 'lowercase') from 'Registry'
