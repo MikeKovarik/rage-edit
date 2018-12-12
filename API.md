@@ -16,9 +16,9 @@
   * [`.has()` – Check if key or value exists](#method.has)
   * [`.delete()` – Remove data from registry](#method.delete)
 * [Static properties](#static)
-  * [DEFAULT](#static.default)
+  <!-- * [DEFAULT](#static.default)
   * [VALUES](#static.values)
-  * [IS_OPTIONS](#static.isOptions)
+  * [IS_OPTIONS](#static.isOptions) -->
 * [Constructor, instance mode](#instance)
   * [new Registry()](#instance.constructor)
   * [Instance properties](#instance.properties)
