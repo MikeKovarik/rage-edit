@@ -6,7 +6,7 @@ import {Registry} from './Registry.mjs'
 // Just like static .set() but first argument 'path' can be omitted,
 // or used a relative path starting with '//' like '//supath'
 Registry.prototype.set = function(...args) {
-	return Registry.set(...this._formatArgs(args))
+	return Registry.set(this._formatArgs(args))
 }
 
 

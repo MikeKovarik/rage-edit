@@ -5,12 +5,12 @@ import {VALUE_DEFAULT, VALUE_NOT_SET} from './util.mjs'
 
 
 Registry.prototype.get = function(...args) {
-	return Registry.get(...this._formatArgs(args))
+	return Registry.get(this._formatArgs(args))
 }
 
 
 Registry.prototype.has = async function(...args) {
-	return Registry.has(...this._formatArgs(args))
+	return Registry.has(this._formatArgs(args))
 }
 
 

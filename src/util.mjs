@@ -217,8 +217,8 @@ function bitsToArg(bits) {
 }
 
 // Accepts ([path[, name[, data[, type]]]][, options]) and turns them into a single object
-export function getOptions(args = []) {
-	debug('[util.getOptions] -->', args)
+export function getOptions(args = [], includeDefaults = true) {
+	debug('[util.getOptions] -->', args, {includeDefaults})
 	// Parse arguments
 	var userOptions = {}
 	if (args.length === 1 && isObject(args[0])) {
@@ -230,8 +230,8 @@ export function getOptions(args = []) {
 		userOptions = args.pop()
 	// Destructure arguments
 	var [path, name, data] = args
-	// Get default values
-	var {lowercase, format, bits} = Registry
+	// Get default values if needed
+	var {lowercase, format, bits} = includeDefaults ? Registry : {}
 	// Path, name, and data passed as args can be overridden
 	//   with the same named options passed in options obejct.
 	var defaultOptions = {lowercase, format, bits, path, name, data}
@@ -240,11 +240,11 @@ export function getOptions(args = []) {
 	// Allow both forward slashes and backslashes
 	if (options.path)
 		options.path = sanitizePath(options.path)
-	// Convert 'bits' value to a valid 'reg.exe' argument
-	if (options.bits)
+	// Convert 'bits' value into a valid 'reg.exe' argument
+	if (options.bits !== undefined)
 		options.bitsArg = bitsToArg(options.bits)
 	// Remove all 'undefined' options
-	Object.keys(options).forEach((key) => (options[key] == undefined) && delete options[key])
+	Object.keys(options).forEach((key) => (options[key] === undefined) && delete options[key])
 	debug('[util.getOptions] <--', options)
 	return options
 }

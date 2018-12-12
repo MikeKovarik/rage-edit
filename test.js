@@ -1546,24 +1546,24 @@ describe('new Registry', () => {
 	describe('._formatArgs', () => {
 
 		it('handles subpath-less args', async () => {
-			var output = reg._formatArgs(['name'])
-			assert.equal(output[0], OW_PATH)
-			assert.equal(output[1], 'name')
+			var result = reg._formatArgs(['name'])
+			assert.equal(result.path, OW_PATH)
+			assert.equal(result.name, 'name')
 		})
 
 		it('handles args with subpath', async () => {
-			var result = reg._formatArgs(['\\Blackwatch', 'name'])[0]
-			assert.equal(result, BW_PATH)
+			var result = reg._formatArgs(['\\Blackwatch', 'name'])
+			assert.equal(result.path, BW_PATH)
 		})
 
 		it('handles args with relative subpath', async () => {
-			var result = reg._formatArgs(['.\\Blackwatch', 'name'])[0]
-			assert.equal(result, BW_PATH)
+			var result = reg._formatArgs(['.\\Blackwatch', 'name'])
+			assert.equal(result.path, BW_PATH)
 		})
 
 		it('handles subpath with forward slashes', async () => {
-			var result = reg._formatArgs(['./Blackwatch', 'name'])[0]
-			assert.equal(result, BW_PATH)
+			var result = reg._formatArgs(['./Blackwatch', 'name'])
+			assert.equal(result.path, BW_PATH)
 		})
 
 	})

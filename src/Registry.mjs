@@ -7,34 +7,50 @@ import { debug } from './util.mjs';
 // Also a constructor of an object with access to given single registry key.
 export class Registry {
 
-	constructor(path, options) {
-		debug('[new Registry()] -->', {path, options})
-		path = sanitizePath(path)
-		if (path.endsWith('\\'))
-			path = path.slice(-1)
-		this.path = path
-		var hive = path.split('\\').shift()
+	constructor(...args) {
+		debug('[new Registry()] -->', args)
+		var options = getOptions(args)
+
+		if (options.path.endsWith('\\'))
+			options.path = options.path.slice(-1)
+		this.path = options.path
+
+		var hive = options.path.split('\\').shift()
 		this.hive = shortenHive(hive)
 		if (!HIVES.includes(this.hive))
 			throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
 		this.hiveLong = extendHive(hive)
-		this.options = getOptions([options])
+
+		this.options = options
 		debug('[new Registry()] <--', this)
 	}
 
 	_formatArgs(args) {
+		debug('[Registry._formatArgs] -->', args)
 		var options = Object.assign({}, this.options, {[Registry.IS_OPTIONS]: true})
-		if (args.length === 0)
-			return [this.path, options]
-		var firstArg = sanitizePath(args[0])
-		if (firstArg.startsWith('.\\'))
-			args[0] = this.path + firstArg.slice(1)
-		else if (firstArg.startsWith('\\'))
-			args[0] = this.path + firstArg
-		else
-			args.unshift(this.path)
-		args.push(options)
-		return args
+		if (args.length === 0) {
+			options.path = this.path
+			debug('[Registry._formatArgs] <--', options)
+			return options
+		}
+
+		if (typeof args[0] == 'string') {
+			args[0] = sanitizePath(args[0])
+
+			if (args[0].startsWith('.\\'))
+				args[0] = this.path + args[0].slice(1)
+			else if (args[0].startsWith('\\'))
+				args[0] = this.path + args[0]
+			else
+				args = [this.path, ...args]
+		}
+
+		// 'false' is for not including default values (such as 'lowercase') from 'Registry'
+		var userOptions = getOptions(args, false)
+		options = Object.assign({}, options, userOptions)
+
+		debug('[Registry._formatArgs] <--', options)
+		return options
 	}
 
 	static async getCodePage() {
@@ -80,6 +96,8 @@ Registry.lowercase = true
 // Calls return simplified output format by default.
 // Can be 'simple', 'complex', (TODO) 'naive'
 Registry.format = 'simple'
+// By default 'bits' depend on node.js version
+Registry.bits = null
 
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'

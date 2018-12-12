@@ -3,11 +3,11 @@ import {Registry} from './Registry.mjs'
 
 
 Registry.prototype.delete = function(...args) {
-	return Registry.delete(...this._formatArgs(args))
+	return Registry.delete(this._formatArgs(args))
 }
 
 Registry.prototype.clear = function(...args) {
-	return Registry.clear(...this._formatArgs(args))
+	return Registry.clear(this._formatArgs(args))
 }
 
 
