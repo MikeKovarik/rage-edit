@@ -8,6 +8,7 @@
   * [`lowercase` – Case in/sensitivity](#options.lowercase)
   * [`format` – Output format](#options.format)
   * [`bits` – Force 64/32bit registry view](#options.bits)
+  * [`unicode` – Enable unicode support](#options.unicode)
   * [`recursive` – Retrieve content of subkeys](#options.recursive)
   * [`$isOptions` – Explicitly mark object as options object](#options.isOptions)
 * [Methods](#methods)
@@ -26,7 +27,7 @@
 
 # <a name="options"></a>Options
 
-## <a name="options.path"></a>`path`
+## <a name="options.path"></a>`path`: String
 Path is the only value that is required in every method. If first argument is string, it's regarded as `path`
 
 **Example**: `HKLM/SOFTWARE/Overwatch`
@@ -43,7 +44,7 @@ Path is the only value that is required in every method. If first argument is st
   |`HKEY_USERS`|`HKU`|
   |`HKEY_CURRENT_CONFIG`|`HKCC`|
 
-## <a name="options.name"></a>`name`
+## <a name="options.name"></a>`name`: String
 Value name, should always be string.
 
 In the [.set()](#method.set) method `name` is regarded as subkey name if `data` is object.
@@ -51,12 +52,12 @@ In the [.set()](#method.set) method `name` is regarded as subkey name if `data` 
 * Set `name` to `''` (empty string) to work with `(Default)` value
 * Name is case insensitive (can be changed with `lowercase` option).
 
-## <a name="options.data"></a>`data`
+## <a name="options.data"></a>`data`: Any
 Value data. Can be `String`, `Number`, `Array<String>`, `Buffer`, `Uint8Array`, `ArrayBuffer`
 
 In the [.set()](#method.set) method it also can be `Object`.
 
-## <a name="options.type"></a>`type`
+## <a name="options.type"></a>`type`: String
 Value type. This option is actual in the [.set() method](#method.set) only. If `type` is omitted, it is inferred from `data` as follows:
 
 |JS type|Registry type|
@@ -69,7 +70,7 @@ Value type. This option is actual in the [.set() method](#method.set) only. If `
 
 **Note**: if `type` does not start with "REG_", it will be prepended automatically which means `REG_DWORD` and `DWORD` are equal and both are valid types.
 
-## <a name="options.lowercase"></a>`lowercase`
+## <a name="options.lowercase"></a>`lowercase`: Boolean
 `rage-edit` transforms all key paths and value names (not the actual data of value entry) to lowercase by default to prevent confusion. This does not affect input - you can still use all-caps paths and value names with uppercased characters.
 
 Check the [.get() method](#method.get)'s examples section for output examples.
@@ -79,7 +80,7 @@ The lowercasing also can be turned off globally:
 Registry.lowercase = false
 ```
 
-## <a name="options.format"></a>`format`
+## <a name="options.format"></a>`format`: String (`simple`, `complex`)
 Retrieving data from the registry poses a complication. Format of the output cannot be as straight forward as JSONs nested structure because the registry better resembles an XML tree where each node can have both a children nodes and also attributes. A Windows registry key can host subkeys as well as value entries, both of which can have the same names leading to possible collisions.
 
 Due to that `rage-edit` offers two types of output formats: `simple` and `complex`. By default `simple` is enabled globally for all calls.
@@ -123,7 +124,7 @@ var software = await Registry.get('HKLM/Software', { recursive: true, format: 'c
 software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].keys.feedmanager.values['']
 ```
 
-## <a name="options.bits"></a>`bits`
+## <a name="options.bits"></a>`bits`: Number (`64`, `32`, `null`)
 64-bit version of Windows uses `Wow6432Node` key to present a separate view of some particular keys (mostly it's the `HKEY_LOCAL_MACHINE/SOFTWARE` key) for 32-bit applications that run on a 64-bit version of Windows. In other words, when a 32-bit application queries a value under the `HKLM/SOFTWARE/Example` subkey, the application reads from the `HKLM/SOFTWARE/Wow6432Node/Example` subkey.
 
 64-bit application can get access to both 64-bit and 32-bit registry views, while 32-bit applications stuck inside of `Wow6432Node` subkeys. The `bits` option can be set to `32` or `64` to force access to 64-bit or 32-bit keys:
@@ -143,16 +144,58 @@ Registry.bits = 32
 // Force 64-bit mode
 Registry.bits = 64
 
-// Let windows decide
+// Let Windows decide
 Registry.bits = null
 ```
 
-## <a name="options.recursive"></a>`recursive`
+## <a name="options.unicode"></a>`unicode`: Boolean
+Node.js does always expect UTF-8 output from a child process, but Windows relies on the default system's [code page](https://ss64.com/nt/chcp.html) (with English locale it is `cp437`, with Russian locale it is `cp866` and so on) which results to rendering non-ASCII characters as `?` or `�`.
+
+A possible workaround is change the console codepage to `65001`. But due to how Windows console works, changed codepage stays changed even after JS code finished its work:
+
+```
+C:\>chcp
+Active code page: 437
+
+C:\>node yourScriptThatChangesCodepage.js
+
+C:\>chcp
+Active code page: 65001
+```
+
+That may lead to unexpected results in the future (note that the problem is actual within current console instance only).
+
+To avoid that, the `unicode` option allows to change the code page to `65001` before reading and restored it right after registry data is gotten. That safety slows down performance a bit, but usually the difference is insignificant (about +20ms).
+
+```js
+await Registry.set('HKLM/SOFTWARE/Example', 'Unicode string', 'Unicode: Коварные закорючки ツ')
+
+-> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string')
+<- 'Unicode: ???????? ????????? ?'
+
+-> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string', { unicode: true })
+<- 'Unicode: Коварные закорючки ツ'
+```
+
+But if you're going to read a lot of unicode data from registry, it's possible to temporarily switch `rage-edit` (and concurrently the entire console instance's output) to unicode the following way:
+
+```js
+try {
+  await Registry.enableUnicode()
+  // Doing stuff with registry...
+} finally {
+  await Registry.disableUnicode()
+}
+```
+
+**Note**: this problem is actual for reading from registry only. Writing unicode data works with any codepage.
+
+## <a name="options.recursive"></a>`recursive`: Boolean
 By default, `.get()` calls are not recursive due to performance reasons. This can be changed by setting `recursive` option to `true`.
 
 Check the description of the [.get() method](#method.get) for examples.
 
-## <a name="options.isOptions"></a>`$isOptions`
+## <a name="options.isOptions"></a>`$isOptions`: Boolean
 Allows to explicitly mark object as options object. Is used internally but can also be useful in some edge cases described in the [.set() method](#method.set)'s description.
 
 # <a name="methods"></a>Methods
@@ -229,7 +272,7 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Example
 
 ## <a name="method.get"></a>.get([path [, name]][, options])
 
-* Supported options: `path, name, recursive, bits, format, lowercase`
+* Supported options: `path, name, recursive, bits, format, lowercase, unicode`
 
 Retrieves content of `path`. Returned object contains subkeys list and values under the `$values` key. To retrive subkeys content, set `recursive` option to `true`.
 
@@ -528,12 +571,12 @@ let regStrict = new Registry({ format: 'complex', lowercase: false, recursive: t
 ```
 ```js
 // Both path and options
-let regBinary = new Registry('HKLM/SOFTWARE/Example', { type: 'REG_BINARY' })
+let ureg = new Registry('HKLM/SOFTWARE/Example', { unicode: true })
 
-reg.set('/Subkey', 'Forced binary value', 'content')
+ureg.get('/Subkey', 'Some unicode value')
 // Same as:
-Registry.set('HKLM/SOFTWARE/Example/Subkey', 'Forced binary value', 'content', { type: 'REG_BINARY' })
+Registry.set('HKLM/SOFTWARE/Example/Subkey', 'Some unicode value', { unicode: true })
 
 // Options still can be overridden
-reg.set('/Subkey', 'Forced string value', 'content', { type: 'REG_SZ' })
+ureg.set('/Subkey', 'Some normal value', { unicode: false })
 ```
