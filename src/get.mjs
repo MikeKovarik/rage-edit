@@ -14,13 +14,26 @@ Registry.prototype.has = async function(...args) {
 }
 
 
-Registry.get = function(...args) {
+Registry.get = async function(...args) {
 	debug('[get.get]', args)
 	var options = getOptions(args)
-	if (options.name !== undefined)
-		return Registry.getValue(options)
-	else
-		return Registry.getKey(options)
+
+	// Enable unicode
+	if (options.unicode)
+		var isUnicodeTemporaryEnabled = await Registry.enableUnicode()
+
+	try {
+		if (options.name !== undefined)
+			var result = await Registry.getValue(options)
+		else
+			var result = await Registry.getKey(options)
+	} finally {
+		// Disable unicode if needed
+		if (options.unicode && isUnicodeTemporaryEnabled)
+			await Registry.disableUnicode()
+	}
+
+	return result
 }
 
 Registry.has = function(...args) {
