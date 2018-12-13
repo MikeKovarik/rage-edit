@@ -11,6 +11,9 @@ export let VALUE_NOT_SET = undefined
 let errMessagePromise
 let defaultValuesPromise
 
+// Prevents old node.js versions from crashing
+export var BigInt = global.BigInt || undefined
+  
 function getErrorLine(stderr) {
 	return stderr.trim().split('\r\n')[0]
 }
@@ -112,8 +115,6 @@ class RegError extends Error {
 export function inferAndStringifyData(data, type) {
 	if (data === undefined || data === null)
 		return [data, type]
-  // Prevents old node.js versions from crashing
-	var BigIntConstructor = (typeof BigInt === "function") ? BigInt : undefined
 	switch (data.constructor) {
 		// Convert Buffer data into string and infer type to REG_BINARY if none was specified.
 		case Uint8Array:
@@ -138,7 +139,7 @@ export function inferAndStringifyData(data, type) {
 			if (type === undefined)
 				type = DWORD
 			break
-		case BigIntConstructor:
+		case BigInt:
 			// Set REG_QWORD type if none is specified.
 			if (type === undefined)
 				type = QWORD
