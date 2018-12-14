@@ -18,7 +18,7 @@ assert.willNotThrow = async promise => {
 }
 
 const isNode64bit    = (process.arch == 'x64')
-const isNode64bitMsg = 'this test can be passed on x64 node.js only'
+const isNode64bitMsg = 'this test can be passed on 64-bit node.js only'
 
 const PATH             = 'HKLM\\SOFTWARE\\MikeKovarik'
 const PATH_32BIT       = 'HKLM\\SOFTWARE\\WOW6432Node\\MikeKovarik'
@@ -468,16 +468,17 @@ describe('Registry static', () => {
 				assert.equal(data.constructor.name, 'BigInt')
 			})
 
-			it('reads REG_QWORD as string in 0x format if BigInt is not supported', async () => {
-				var NAME = 'casting-4'
-				await setValue(PATH, NAME, 1234, {type: 'REG_QWORD'})
-				var BigIntOrginal = BigInt
-				BigInt = undefined
-				var data = await getValue(PATH, NAME)
-				BigInt = BigIntOrginal
-				assert.isString(data)
-				assert.isTrue(data.startsWith('0x'))
-			})
+			// Can't change BigInt from outside
+			// it('reads REG_QWORD as string in 0x format if BigInt is not supported', async () => {
+			// 	var NAME = 'casting-4'
+			// 	await setValue(PATH, NAME, 1234, {type: 'REG_QWORD'})
+			// 	var BigIntOrginal = global.BigInt
+			// 	global.BigInt = undefined
+			// 	var data = await getValue(PATH, NAME)
+			// 	global.BigInt = BigIntOrginal
+			// 	assert.isString(data)
+			// 	assert.isTrue(data.startsWith('0x'))
+			// })
 
 			it('reads REG_BINARY as buffer', async () => {
 				var NAME = 'casting-5'
@@ -577,6 +578,14 @@ describe('Registry static', () => {
 			assert.equal(keyWow.$values.path, key32.$values.path)
 		})
 
+		it(`can change 'Registry.VALUES'`, async () => {
+			var valuesOriginal = Registry.VALUES
+			Registry.VALUES = '$newValues'
+			var result = await getKey('HKCR\\Directory')
+			Registry.VALUES = valuesOriginal
+			assert.equal(result.$newValues[''], 'File Folder')
+		})
+
 		describe('simple format', () => {
 
 			it('returns simple format', async () => {
@@ -659,7 +668,7 @@ describe('Registry static', () => {
 			})
 
 			it('can work recursively', async () => {
-				var result = await getKey('HKCR\\Directory\\Background', true, {format: 'complex', recursive: true})
+				var result = await getKey('HKCR\\Directory\\Background', {format: 'complex', recursive: true})
 				assert.isObject(result.keys['shellex'])
 				assert.isObject(result.keys['shellex'].keys)
 				assert.isObject(result.keys['shellex'].keys['contextmenuhandlers'])
@@ -695,7 +704,7 @@ describe('Registry static', () => {
 			assert.isString(result)
 		})
 
-		it('works using 64bit and 32bit modes', async () => {
+		it('works in 64-bit and 32-bit modes', async () => {
 			assert.isOk(isNode64bit, isNode64bitMsg)
 
 			var path = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo'
@@ -707,6 +716,57 @@ describe('Registry static', () => {
 			assert.isNotEmpty(value32)
 
 			assert.notEqual(value64, value32)
+		})
+
+		it('path can be set through options', async () => {
+			var resultArg = await Registry.get('HKCR\\Directory\\shellex')
+			var resultObj = await Registry.get({path: 'HKCR\\Directory\\shellex'})
+
+			assert.isObject(resultArg['contextmenuhandlers'])
+			assert.isObject(resultObj['contextmenuhandlers'])
+
+			assert.deepEqual(resultArg, resultObj)
+		})
+
+		it('value name can be set through options', async () => {
+			var resultArg = await Registry.get('HKCR\\Directory', '')
+			var resultObj = await Registry.get('HKCR\\Directory', {name: ''})
+
+			assert.equal(resultArg, 'File Folder')
+			assert.equal(resultObj, 'File Folder')
+		})
+
+		it('both value name and path can be set through options', async () => {
+			var resultArg = await Registry.get('HKCR\\Directory', '')
+			var resultObj = await Registry.get({path: 'HKCR\\Directory', name: ''})
+			
+			assert.equal(resultArg, 'File Folder')
+			assert.equal(resultObj, 'File Folder')
+		})
+
+		it('can read unicode using method', async () => {
+			var NAME = 'Unicode string'
+			var DATA = 'Testing коварные закорючки ツ'
+			await Registry.delete(PATH)
+			await Registry.set(PATH, NAME, DATA)
+
+			try {
+				await Registry.enableUnicode()
+				var result = await Registry.get(PATH, NAME)
+			} finally {
+				await Registry.disableUnicode()
+			}
+			assert.equal(result, DATA)
+		})
+
+		it('can read unicode using option', async () => {
+			var NAME = 'Unicode string'
+			var DATA = 'Testing коварные закорючки ツ'
+			await Registry.delete(PATH)
+			await Registry.set(PATH, NAME, DATA)
+
+			var result = await Registry.get(PATH, NAME, {unicode: true})
+			assert.equal(result, DATA)
 		})
 
 	})
@@ -833,6 +893,27 @@ describe('Registry static', () => {
 			assert.isFalse(await Registry.has(PATH, value64, {bits: 32}))
 		})
 
+		it('path can be set through options', async () => {
+			assert.isTrue(await hasKey('HKLM\\SOFTWARE'))
+			assert.isTrue(await hasKey({path: 'HKLM\\SOFTWARE'}))
+			assert.isFalse(await hasKey(PATH_NONEXISTENT))
+			assert.isFalse(await hasKey({path: PATH_NONEXISTENT}))
+		})
+
+		it('value name can be set through options', async () => {
+			assert.isTrue(await hasValue('HKCR\\*', 'AlwaysShowExt'))
+			assert.isTrue(await hasValue('HKCR\\*', {name: 'AlwaysShowExt'}))
+			assert.isFalse(await hasValue('HKCR\\*', 'foo-bar non existent'))
+			assert.isFalse(await hasValue('HKCR\\*', {name: 'foo-bar non existent'}))
+		})
+
+		it('both value name and path can be set through options', async () => {
+			assert.isTrue(await hasValue('HKCR\\*', 'AlwaysShowExt'))
+			assert.isTrue(await hasValue({path: 'HKCR\\*', name: 'AlwaysShowExt'}))
+			assert.isFalse(await hasValue('HKCR\\*', 'foo-bar non existent'))
+			assert.isFalse(await hasValue({path: 'HKCR\\*', name: 'foo-bar non existent'}))
+		})
+
 	})
 
 
@@ -844,6 +925,7 @@ describe('Registry static', () => {
 
 		it('deletes the key at given path', async () => {
 			await setKey(PATH)
+			assert.isTrue(await hasKey(PATH))
 			await deleteKey(PATH)
 			assert.isFalse(await hasKey(PATH))
 		})
@@ -982,6 +1064,29 @@ describe('Registry static', () => {
 
 			assert.isTrue(await hasValue(PATH, NAME))
 			assert.isFalse(await hasValue(PATH_32BIT, NAME))
+		})
+
+		it('path can be set through options', async () => {
+			await setKey(PATH)
+			assert.isTrue(await hasKey(PATH))
+			await deleteKey({path: PATH})
+			assert.isFalse(await hasKey(PATH))
+		})
+
+		it('value name can be set through options', async () => {
+			const NAME = 'deleteme'
+			await Registry.set(PATH, NAME, 'this is the value entry to be deleted')
+			assert.isTrue(await hasValue(PATH, NAME))
+			await deleteValue(PATH, {name: NAME})
+			assert.isFalse(await hasValue(PATH, NAME))
+		})
+
+		it('both value name and path can be set through options', async () => {
+			const NAME = 'deleteme'
+			await Registry.set(PATH, NAME, 'this is the value entry to be deleted')
+			assert.isTrue(await hasValue(PATH, NAME))
+			await deleteValue({path: PATH, name: NAME})
+			assert.isFalse(await hasValue(PATH, NAME))
 		})
 
 	})
@@ -1272,13 +1377,25 @@ describe('Registry static', () => {
 
 	describe('.set', () => {
 
-		// todo
-
 		it('is function', async () => {
 			assert.isFunction(Registry.set)
 		})
 
-		// TODO in future
+		it('only using one parameter serves as alias for .setKey', async () => {
+			const PATH = 'HKLM\\SOFTWARE\\MikeKovarik\\nonexistent'
+			await deleteKey(PATH).catch(noop)
+			await Registry.set(PATH)
+			assert.isTrue(await hasKey(PATH))
+		})
+
+		it('using two parameters serves as alias for .setValue', async () => {
+			var NAME = 'name'
+			var DATA = 'this is the newly created value data'
+			await deleteValue(PATH, NAME).catch(noop)
+			assert.isFalse(await hasValue(PATH, NAME))
+			await Registry.set(PATH, NAME, DATA)
+			assert.equal(await getValue(PATH, NAME), DATA)
+		})
 
 		it(`complex`, async () => {
 			await Registry.delete(OW_PATH)
@@ -1290,19 +1407,6 @@ describe('Registry static', () => {
 			assert.isTrue(await Registry.has(OW_PATH))
 			assert.isTrue(await Registry.has(OW_PATH, 'leader'))
 			assert.equal((await Registry.get(OW_PATH, 'scientists')).length, 3)
-		})
-
-		it('creates different values in 64bit and 32bit modes', async () => {
-			assert.isOk(isNode64bit, isNode64bitMsg)
-
-			await Registry.delete(PATH)
-			await Registry.delete(PATH_32BIT)
-
-			await Registry.set(PATH, 'reg-mode', 'reg64bit', {bits: 64})
-			await Registry.set(PATH, 'reg-mode', 'reg32bit', {bits: 32})
-
-			assert.equal(await getValue(PATH, 'reg-mode'), 'reg64bit')
-			assert.equal(await getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
 		})
 
 		it(`nested complex`, async () => {
@@ -1319,6 +1423,19 @@ describe('Registry static', () => {
 			assert.isTrue(await Registry.has(BW_PATH))
 			assert.equal(await Registry.get(OW_PATH, 'leader'), 'Jack Morrison')
 			assert.equal(await Registry.get(BW_PATH, 'leader'), 'Gabriel Reyes')
+		})
+
+		it('creates different values in 64bit and 32bit modes', async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			await Registry.set(PATH, 'reg-mode', 'reg64bit', {bits: 64})
+			await Registry.set(PATH, 'reg-mode', 'reg32bit', {bits: 32})
+
+			assert.equal(await getValue(PATH, 'reg-mode'), 'reg64bit')
+			assert.equal(await getValue(PATH_32BIT, 'reg-mode'), 'reg32bit')
 		})
 
 		it(`last argument can be explicitly marked as options object (two arguments)`, async () => {
@@ -1357,6 +1474,40 @@ describe('Registry static', () => {
 			assert.notEqual(await getValue(SUBPATH_32BIT, 'bits'), 32)
 		})
 
+
+		it('value data can be set through options', async () => {
+			var NAME = 'value-entry-1'
+			var DATA = 'this is the newly created value data'
+			await deleteValue(PATH, NAME).catch(noop)
+			assert.isFalse(await hasValue(PATH, NAME))
+			await Registry.set(PATH, NAME, {data: DATA, $isOptions: true})
+			assert.equal(await getValue(PATH, NAME), DATA)
+		})
+
+		it('value data and name can be set through options', async () => {
+			var NAME = 'value-entry-2'
+			var DATA = 'this is the newly created value data'
+			await deleteValue(PATH, NAME).catch(noop)
+			assert.isFalse(await hasValue(PATH, NAME))
+			await Registry.set(PATH, {name: NAME, data: DATA, $isOptions: true})
+			assert.equal(await getValue(PATH, NAME), DATA)
+		})
+
+		it('path can be set through options', async () => {
+			const PATH = 'HKLM\\SOFTWARE\\MikeKovarik\\nonexistent'
+			await deleteKey(PATH).catch(noop)
+			await Registry.set({path: PATH})
+			assert.isTrue(await hasKey(PATH))
+		})
+
+		it('all arguments can be set through options', async () => {
+			var NAME = 'value-entry-3'
+			var DATA = 'this is the newly created value data'
+			await deleteValue(PATH, NAME).catch(noop)
+			assert.isFalse(await hasValue(PATH, NAME))
+			await Registry.set({path: PATH, name: NAME, data: DATA})
+			assert.equal(await getValue(PATH, NAME), DATA)
+		})
 
 	})
 
@@ -1496,7 +1647,7 @@ describe('Registry static', () => {
 
 		after(() => {
 			Registry.format = 'simple'
-			delete Registry.bits
+			Registry.bits = null
 		})
 
 		it(`Registry.format = 'complex' is used for all calls`, async () => {
@@ -1511,41 +1662,42 @@ describe('Registry static', () => {
 			Registry.format = 'complex'
 			assert.isArray(await getValues('HKCR\\*'))
 			assert.isObject(await getValues('HKCR\\*', {format: 'simple'}))
+			Registry.format = 'simple'
 		})
 
-		// it(`Registry.bits is used for all calls`, async () => {
-		// 	assert.isOk(isNode64bit, isNode64bitMsg)
+		it(`Registry.bits is used for all calls`, async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
-		// 	var NAME = 'global-bits'
+			var NAME = 'global-bits'
 
-		// 	await Registry.delete(PATH)
-		// 	await Registry.delete(PATH_32BIT)
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
 
-		// 	Registry.bits = 32
-		// 	await Registry.set(PATH, NAME, '32b')
-		// 	Registry.bits = 64
-		// 	await Registry.set(PATH, NAME, '64b')
-		// 	Registry.bits = undefined
+			Registry.bits = 32
+			await Registry.set(PATH, NAME, '32b')
+			Registry.bits = 64
+			await Registry.set(PATH, NAME, '64b')
+			Registry.bits = null
 
-		// 	assert.equal(await getValue(PATH, NAME), '64b')
-		// 	assert.equal(await getValue(PATH_32BIT, NAME), '32b')
-		// })
+			assert.equal(await getValue(PATH, NAME), '64b')
+			assert.equal(await getValue(PATH_32BIT, NAME), '32b')
+		})
 
-		// it(`Registry.bits can by bypassed by specifying custom options`, async () => {
-		// 	assert.isOk(isNode64bit, isNode64bitMsg)
+		it(`Registry.bits can by bypassed by specifying custom options`, async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
 
-		// 	var NAME = 'bypassing-global-bits'
+			var NAME = 'bypassing-global-bits'
 
-		// 	await Registry.delete(PATH)
-		// 	await Registry.delete(PATH_32BIT)
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
 
-		// 	Registry.bits = 32
-		// 	await Registry.set(PATH, NAME, '', {bits: 64})
-		// 	Registry.bits = undefined
+			Registry.bits = 32
+			await Registry.set(PATH, NAME, '', {bits: 64})
+			Registry.bits = null
 
-		// 	assert.isTrue(await hasValue(PATH, NAME))
-		// 	assert.isFalse(await hasValue(PATH_32BIT, NAME))
-		// })
+			assert.isTrue(await hasValue(PATH, NAME))
+			assert.isFalse(await hasValue(PATH_32BIT, NAME))
+		})
 
 	})
 
@@ -1758,23 +1910,85 @@ describe('new Registry', () => {
 
 	})
 
-	// TODO: tests for such options as 'lowercase' and 'format'
-
-	describe('{mode}', () => {
+	describe('Options', () => {
 	
-		it('works with 32 and 64 bit registry views', async () => {
+		it('lowercase', async () => {
+			var regNoLowercase = new Registry('HKCR\\Directory\\Background\\shellex', {lowercase: false})
+			var content = await regNoLowercase.get()
+			assert.property(content, 'ContextMenuHandlers')
+		})
+	
+		it('lowercase can be overriden', async () => {
+			var regNoLowercase = new Registry('HKCR\\Directory\\Background\\shellex', {lowercase: false})
+			var content = await regNoLowercase.get({lowercase: true})
+			assert.property(content, 'contextmenuhandlers')
+		})
+
+		it('format', async () => {
+			var regComplex = new Registry('HKCR\\*', {format: 'complex'})
+			var content = await regComplex.get()
+			assert.isObject(content)
+			assert.property(content, 'keys')
+			assert.property(content.keys, 'openwithlist')
+		})
+
+		it('format can be overriden', async () => {
+			var regComplex = new Registry('HKCR\\*', {format: 'complex'})
+			var content = await regComplex.get({format: 'simple'})
+			assert.isObject(content)
+			assert.property(content, '$values')
+			assert.property(content, 'openwithlist')
+		})
+
+		it('bits', async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
+
 			await Registry.delete(PATH)
 			await Registry.delete(PATH_32BIT)
-	
+
 			var reg64 = new Registry(PATH, {bits: 64})
 			var reg32 = new Registry(PATH, {bits: 32})
-	
+
 			await reg64.set('reg-mode', 'reg64bit')
 			await reg32.set('reg-mode', 'reg32bit')
-	
+
 			assert.equal(await reg64.get('reg-mode'), 'reg64bit')
 			assert.equal(await reg32.get('reg-mode'), 'reg32bit')
 			assert.equal(await getValue(PATH_32BIT, 'reg-mode', {bits: 64}), 'reg32bit')
+		})
+
+		it('bits can be overriden', async () => {
+			assert.isOk(isNode64bit, isNode64bitMsg)
+
+			await Registry.delete(PATH)
+			await Registry.delete(PATH_32BIT)
+
+			var reg64 = new Registry(PATH, {bits: 64})
+			var reg32 = new Registry(PATH, {bits: 32})
+
+			await reg64.set('reg-mode', 'reg64bit')
+			await reg64.set('reg-mode', 'reg32bit', {bits: 32})
+			
+			assert.equal(await reg64.get('reg-mode'), 'reg64bit')
+			assert.equal(await reg32.get('reg-mode'), 'reg32bit')
+			
+			await reg32.set('reg-mode', 'reg64bit-cancelled', {bits: null})
+			assert.equal(await getValue(PATH, 'reg-mode'), 'reg64bit-cancelled')
+		})
+	
+		it('path can be set as options', async () => {
+			var regLowercase = new Registry({path: 'HKCR\\Directory\\Background\\shellex'})
+			var content = await regLowercase.get()
+			assert.property(content, 'contextmenuhandlers')
+		})
+
+		it('path can be omitted', async () => {
+			var regLowercase = new Registry({lowercase: false})
+			var content = await regLowercase.get('HKCR\\Directory\\Background\\shellex')
+			assert.property(content, 'ContextMenuHandlers')
+			
+			var result = await regLowercase.get('HKLM\\SOFTWARE\\Microsoft\\Shared Tools\\Msinfo', 'Path')
+			assert.isOk(result)
 		})
 	
 	})
