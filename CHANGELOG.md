@@ -36,8 +36,8 @@
 - **Added** unicode support
 - **Added** experimental BigInt support (???)
 - **Changed**: `path` in the instance mode became optional
-- **Changed**: New README file (???)
-- **Changed**: Tests clean up registry after themselves
+- **Changed**: New README file
+- **Changed**: New tests
 - **Fixed** support locales other than English (#10)
 
 
