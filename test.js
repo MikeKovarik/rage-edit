@@ -160,7 +160,7 @@ describe('Registry static', () => {
 	describe('.getKeys', () => {
 
 		it('is function', async () => {
-			assert.isFunction(getKeys)
+			assert.isFunction(Registry.getKeys)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
@@ -274,7 +274,7 @@ describe('Registry static', () => {
 	describe('.getValues', () => {
 
 		it('is function', async () => {
-			assert.isFunction(getValues)
+			assert.isFunction(Registry.getValues)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
@@ -375,7 +375,7 @@ describe('Registry static', () => {
 	describe('.getValue', () => {
 
 		it('is function', async () => {
-			assert.isFunction(getValue)
+			assert.isFunction(Registry.getValue)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
@@ -529,7 +529,7 @@ describe('Registry static', () => {
 	describe('.getKey', () => {
 
 		it('is function', async () => {
-			assert.equal(typeof getKey, 'function')
+			assert.isFunction(Registry.getKey)
 		})
 
 		it('returns undefined if the key path does not exist', async () => {
@@ -775,7 +775,7 @@ describe('Registry static', () => {
 	describe('.hasKey', () => {
 
 		it('is function', async () => {
-			assert.isFunction(hasKey)
+			assert.isFunction(Registry.hasKey)
 		})
 
 		it('returns true if key at given path exists', async () => {
@@ -809,7 +809,7 @@ describe('Registry static', () => {
 	describe('.hasValue', () => {
 
 		it('is function', async () => {
-			assert.isFunction(hasValue)
+			assert.isFunction(Registry.hasValue)
 		})
 
 		it('returns true if value entry exists at given path', async () => {
@@ -920,7 +920,7 @@ describe('Registry static', () => {
 	describe('.deleteKey', () => {
 
 		it('is function', async () => {
-			assert.isFunction(deleteKey)
+			assert.isFunction(Registry.deleteKey)
 		})
 
 		it('deletes the key at given path', async () => {
@@ -962,7 +962,7 @@ describe('Registry static', () => {
 	describe('.deleteValue', () => {
 
 		it('is function', async () => {
-			assert.isFunction(deleteValue)
+			assert.isFunction(Registry.deleteValue)
 		})
 
 		it('deletes the value at given path', async () => {
@@ -1096,7 +1096,7 @@ describe('Registry static', () => {
 	describe('.setKey', () => {
 
 		it('is function', async () => {
-			assert.isFunction(setKey)
+			assert.isFunction(Registry.setKey)
 		})
 
 		it('creates new key', async () => {
@@ -1144,7 +1144,7 @@ describe('Registry static', () => {
 		}
 
 		it('is function', async () => {
-			assert.isFunction(setValue)
+			assert.isFunction(Registry.setValue)
 		})
 
 		it('creates new value entry', async () => {
@@ -1515,7 +1515,7 @@ describe('Registry static', () => {
 	describe('.clearValues', () => {
 
 		it('is function', async () => {
-			assert.isFunction(clearValues)
+			assert.isFunction(Registry.clearValues)
 		})
 
 		it('deletes all values at given path, except for the default one', async () => {
@@ -1543,7 +1543,7 @@ describe('Registry static', () => {
 	describe('.clearKeys', () => {
 
 		it('is function', async () => {
-			assert.isFunction(clearKeys)
+			assert.isFunction(Registry.clearKeys)
 		})
 
 		it('deletes all subkeys', async () => {
@@ -1803,11 +1803,11 @@ describe('new Registry', () => {
 
 	describe('.set', () => {
 
-		it(`.set(name) creates the value exists if it doesn't exist`, async () => {
+		it(`.set(name) creates the value if it doesn't exist`, async () => {
 			var NAME = 'leader'
 			var DATA = 'Jack Morrison'
 			await Registry.delete(OW_PATH, NAME)
-			await reg.set(OW_PATH, NAME, DATA)
+			await reg.set(NAME, DATA)
 			assert.isTrue(await Registry.has(OW_PATH, NAME))
 			assert.equal(await Registry.get(OW_PATH, NAME), DATA)
 		})
@@ -1815,8 +1815,8 @@ describe('new Registry', () => {
 		it(`.set(name) rewrites the value if it exists`, async () => {
 			var NAME = 'leader'
 			var DATA = 'Jack Morrison'
-			await reg.set(OW_PATH, NAME, 'previous data')
-			await reg.set(OW_PATH, NAME, DATA)
+			await reg.set(NAME, 'previous data')
+			await reg.set(NAME, DATA)
 			assert.equal(await Registry.get(OW_PATH, NAME), DATA)
 		})
 
