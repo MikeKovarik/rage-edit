@@ -1807,7 +1807,7 @@ describe('new Registry', () => {
 			var NAME = 'leader'
 			var DATA = 'Jack Morrison'
 			await Registry.delete(OW_PATH, NAME)
-			await Registry.set(OW_PATH, NAME, DATA)
+			await reg.set(OW_PATH, NAME, DATA)
 			assert.isTrue(await Registry.has(OW_PATH, NAME))
 			assert.equal(await Registry.get(OW_PATH, NAME), DATA)
 		})
@@ -1815,8 +1815,8 @@ describe('new Registry', () => {
 		it(`.set(name) rewrites the value if it exists`, async () => {
 			var NAME = 'leader'
 			var DATA = 'Jack Morrison'
-			await Registry.set(OW_PATH, NAME, 'previous data')
-			await Registry.set(OW_PATH, NAME, DATA)
+			await reg.set(OW_PATH, NAME, 'previous data')
+			await reg.set(OW_PATH, NAME, DATA)
 			assert.equal(await Registry.get(OW_PATH, NAME), DATA)
 		})
 
