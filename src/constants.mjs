@@ -24,6 +24,10 @@ const HKCC  = 'HKCC'
 export const HIVES = [HKLM, HKCU, HKCR, HKU, HKCC]
 
 
+export const ARG_64BIT = '/reg:64'
+export const ARG_32BIT = '/reg:32'
+
+
 export function shortenKeyPath(path) {
 	var index = path.indexOf('\\')
 	var firstSection = path.slice(0, index)

@@ -18,10 +18,51 @@
 npm install rage-edit
 ```
 
-## Keep in mind before using
+
+# Table of Contents
+
+* [Keep in mind before using](#notes)
+* [Usage](#usage)
+  * [Static mode](#usage.static)
+  * [Instance mode](#usage.instance)
+* [Options](#options)
+  * [`path` – Registry address](#options.path)
+  * [`name` – Value name](#options.name)
+  * [`data` – Value content](#options.data)
+  * [`type` – Value type](#options.type)
+  * [`lowercase` – Case in/sensitivity](#options.lowercase)
+  * [`format` – Output format](#options.format)
+  * [`bits` – Force 64/32bit registry view](#options.bits)
+  * [`unicode` – Enable unicode support](#options.unicode)
+  * [`recursive` – Retrieve content of subkeys](#options.recursive)
+  * [`$isOptions` – Explicitly mark object as options object](#options.isOptions)
+* [Methods](#methods)
+  * [`.get()` – Read data from registry](#method.get)
+  * [`.set()` – Write data to registry](#method.set)
+  * [`.has()` – Check if key or value exists](#method.has)
+  * [`.delete()` – Remove data from registry](#method.delete)
+* [Static properties](#static)
+  <!-- * [DEFAULT](#static.default)
+  * [VALUES](#static.values)
+  * [IS_OPTIONS](#static.isOptions) -->
+* [Constructor, instance mode](#instance)
+  * [new Registry()](#instance.constructor)
+  * [Instance properties](#instance.properties)
+  * [Examples](#instance.examples)
+* [Caveats, edge cases & the weirdness of Windows registry](#caveats)
+  * [Friendly reminder about HKCR, HKLM, 64-bit and Wow6432Nodes](#caveats.reminder)
+  * [Default values](#caveats.default-values)
+  * [Restricted access, administrator permissions](#caveats.permissions)
+  * [Error suppresion](#caveats.error-suppresion)
+  * [Case sensitivity](#caveats.case-sensitivity)
+  * [Type infering and conversions](#caveats.type-infering)
+* [Join the discussion](#discussion)
+* [Credits](#credits)
+
+# <a name="notes"></a>Keep in mind before using
 
 
-### Structure and naming (keys & values) in the Windows Registry
+## Structure and naming (keys & values) in the Windows Registry
 
 Please be advised that the `key` and `value` terminology from the Windows registry might be confusing because it's different than the naming widely used in the world of JS. Windows registry is much like file system with folders and files, or XML, rather than JSON.
 
@@ -34,19 +75,21 @@ So when refering to `value`, its name is often meant rather than the data it hol
 To lessen the confusion, we're often using terms like value entry, value name, name of the value entry, etc... and path stands for the path of the key.
 
 
-### Default value (empty string)
+## Default value (empty string)
 
 Every windows registry key always contains a default value with the empty string `''` for name. 
 
 ```js
-// read default value
-await Registry.get('HKLM\\SOFTWARE\\Overwatch', '')
-// write default value
-await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
-```
-[See *Default values* section for more](#default-values)
+// Read default value
+await Registry.get('HKLM/SOFTWARE/Overwatch', '')
 
-### Case in/sensitivity
+// Write default value
+await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
+```
+[See *Default values* section for more](#caveats.default-values)
+
+
+## Case in/sensitivity
 
 Key path and value names are case insensitive, you can interchangeably read, write and delete with any combination of casing. `rage-edit` lowercases everything by default.
 
@@ -54,302 +97,164 @@ Key path and value names are case insensitive, you can interchangeably read, wri
 await Registry.get('HKCR\\.exe', 'Content Type') // returns the data
 await Registry.get('hkcr\\.exe', 'content type') // returns the data
 ```
-[See *Case sensitivity* section for more](#case-sensitivity)
+[See *Case sensitivity* section for more](#caveats.case-sensitivity)
 
-# API
 
-## `Registry` class
+# <a name="usage"></a>Usage
 
 Only the `Registry` class is exported (both named and default export)
 
 ```js
 // ES Modules way
-import {Registry} from 'rage-edit'
+import { Registry } from 'rage-edit'
 import Registry from 'rage-edit'
+
 // CJS way
-var {Registry} = require('rage-edit')
+var { Registry } = require('rage-edit')
 ```
 
-It is modelled after ES6 `Map` class with methods like `.get()`, `.set()`, `.delete()` and a few others. Those can be used in two modes - static and instance.
+It is modelled after ES6 `Map` class with methods `.get()`, `.set()`, `.has()`, and `.delete()`. Those can be used in two modes - static and instance.
 
-### Static mode
+
+## <a name="usage.static"></a>Static mode
 
 ```js
 // Creates Overwatch key inside HKLM\SOFTWARE if it doesn't exist yet.
 // Also creates default value inside it (with data 'Soldiers, scientists, adventurers, oddities...')
-await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
+// NOTE: both backslashes (\) and forward slashes (/) can be used
+await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
+
 // Gets value of 'Scientists' from key 'HKLM\Software\Overwatch'
-await Registry.get('HKLM\\Software\\Overwatch', 'Scientists')
+await Registry.get('HKLM/Software/Overwatch', 'Scientists')
+
 // Creates/rewrites value entry 'hq' with data 'Switzerland' at 'HKLM\Software\Overwatch'
-await Registry.set('HKLM\\Software\\Overwatch', 'hq', 'Switzerland')
+await Registry.set('HKLM/Software/Overwatch', 'hq', 'Switzerland')
+
 // Creates/rewrites value 'Leader' at 'HKLM\Software\Overwatch\Backwatch'
-await Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', 'Leader', 'Gabriel Reyes')
-// Retrieves the 'leader' value from 
+await Registry.set('HKLM/Software/Overwatch/Blackwatch', 'Leader', 'Gabriel Reyes')
+
+// Retrieves the 'leader' value 
 // NOTE: case insensitivity
-await Registry.get('hklm\\software\\overwatch\\blackwatch', 'leader')
+await Registry.get('hklm/software/overwatch/blackwatch', 'leader')
 ``` 
 
-### Instance mode
+
+## <a name="usage.instance"></a>Instance mode
 
 ```js
 // Creates the instance but does not yet create the Overwatch key if it doesn't exists yet.
-var reg = new Registry('HKLM\\Software\\Overwatch')
+// NOTE: both backslashes (\) and forward slashes (/) can be used
+var reg = new Registry('HKLM/Software/Overwatch')
+
 // Creates default value inside the key (with data 'Soldiers, scientists, adventurers, oddities...')
 await reg.set('', 'Soldiers, scientists, adventurers, oddities...')
+
 // Gets value of 'Scientists' from key 'HKLM\Software\Overwatch'
 await reg.get('Scientists')
+
 // Creates/rewrites value entry 'hq' with data 'Switzerland' at 'HKLM\Software\Overwatch'
 await reg.set('hq', 'Switzerland')
+
 // Creates/rewrites value 'Leader' at 'HKLM\Software\Overwatch\Backwatch'
-await reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
-// Retrieves the 'leader' value from 
+await reg.set('/Blackwatch', 'Leader', 'Gabriel Reyes')
+
+// Retrieves the 'leader' value 
 // NOTE: case insensitivity
-await reg.get('\\blackwatch', 'leader')
-``` 
-
-
-## Static methods
-
-### `.get(path, [name])`
-
-Retrieves key from `path` or content of the `name`d value entry at the path.
-
-#### Parameters:
-- `path` to a key to retrieve or from where to retrieve the value.
-- `[name]` of the value to retrieve. Optional. Default value (empty string) is retrieved if omitted.
-
-#### Returns:
-`Promise<object>`
-
-#### Example
-```js
-// Retrieves key 'HKLM\Software\Overwatch'.
-Registry.get('HKLM\\Software\\Overwatch')
-// Retrieves default value from 'HKLM\Software\Overwatch'.
-Registry.get('HKLM\\Software\\Overwatch', '')
-// Retrieves value 'Scientists' from 'HKLM\Software\Overwatch'.
-Registry.get('HKLM\\Software\\Overwatch', 'Scientists')
+await reg.get('/blackwatch', 'leader')
 ```
 
-
-### `.has(path, [name])`
-
-Just like `.get()` but returns boolean depending on existence of the key or value.
-
-#### Returns:
-`Promise<bool>`
+[See *Constructor, instance mode* section for more](#instance)
 
 
-### `.delete(path, [name])`
+# <a name="options"></a>Options
 
-Deletes a registry key at the given `path` or deletes a `name`d value entry within this key.
+This section contains info about all possible options. Options is always the last argument (with exceptions for [`.set()` method](#method.set). Check its description for details).
 
-#### Parameters
-- `path` of the key to delete, or the key that hosts the value to delete.
-- `[name]` of the value to delete.
+## <a name="options.path"></a>`path`: String
 
-#### Returns
-`Promise`
+* **Default value**: `undefined`
+* **Template**: `<hive>/<path>`
+* **Example**: `HKLM/SOFTWARE/Overwatch`
 
-#### Example
-```js
-// Deletes subkey 'Blackwatch' (with all of its subkeys and values) inside 'HKLM\Software\Overwatch'
-Registry.delete('HKLM\\Software\\Overwatch\\Blackwatch')
-// Deletes value 'Scientists' from 'HKLM\Software\Overwatch'
-Registry.delete('HKLM\\Software\\Overwatch', 'Scientists')
-// Deletes default value entry (empty string, can be omitted) from 'HKLM\Software\Overwatch'
-Registry.delete('HKLM\\Software\\Overwatch', '')
-// Deletes the key 'HKLM\Software\Overwatch' and all of its subkeys and values
-Registry.delete('HKLM\\Software\\Overwatch')
-```
+Path is the only value that is required in every method. If method's first argument is a string, it's regarded as `path`.
+
+* Both backslashes (`\`) and forward slashes (`/`) can be used. Note that backslashes should be always escaped (`\\`).
+* Path is case insensitive.
+* Path should be started with either long or short hive name:
+
+  |Long name|Short name|
+  |-|-|
+  |`HKEY_LOCAL_MACHINE`|`HKLM`|
+  |`HKEY_CURRENT_USER`|`HKCU`|
+  |`HKEY_CLASSES_ROOT`|`HKCR`|
+  |`HKEY_USERS`|`HKU`|
+  |`HKEY_CURRENT_CONFIG`|`HKCC`|
 
 
+## <a name="options.name"></a>`name`: String
 
-### `.set(path[, name[, data[, type]]])`
+* **Default value**: `undefined`
 
-Creates or rewrites a key or `name`d value inside a key at the given `path`.
+Value name. If method's second argument is a string, it's regarded as `name`.
 
-If a key at the path doesn't exist it will be created as if `Registry.set(path)` was called beforehand.
+<!-- In the [.set()](#method.set) method `name` is regarded as subkey name if `data` is object. -->
 
-Creating new keys also creates an empty default value inside it (that's how windows registry works) as if `Registry.set(path, '', '', 'REG_SZ')` was called with it.
+* Set `name` to `''` (empty string) to work with [`(Default)` value](#caveats.default-values).
+* Name is case insensitive (can be changed with `lowercase` option).
 
-#### Parameters
-- `path` of the key where the value should be created.
-- `[name]` of the value to create or modify. Optional. To modify the key's default value (empty string) use `''`.
-- `[data]` to store in the value entry. Optional.
-- `[type]` of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
+
+## <a name="options.data"></a>`data`: Any
+
+* **Default value**: `undefined`
+
+Value data. Can be `String`, `Number`, `Array<String>`, `Buffer`, `Uint8Array`, `ArrayBuffer`.  If method's third argument is a string, it's regarded as `data`.
+
+In the [.set()](#method.set) method it also can be `Object` (check [method's description](#method.set) for details).
+
+
+## <a name="options.type"></a>`type`: String
+
+* **Default value**: `REG_SZ` (for `.set()` method)
+
+Value type. This option is actual in the [.set() method](#method.set) only. If `type` is omitted, it is inferred from `data` as follows:
 
 |JS type|Registry type|
 |-|-|
 |`String`|`REG_SZ`, `REG_EXPAND_SZ`|
 |`Number`|`REG_DWORD`|
+|`BigInt`|`REG_QWORD`|
 |`Array<String>`|`REG_MULTI_SZ`|
 |`Buffer`, `Uint8Array`, `ArrayBuffer`|`REG_BINARY`|
 
-#### Returns
+**Note**: if `type` does not start with "REG_", it will be prepended automatically which means `REG_DWORD` and `DWORD` are equal and both are valid types.
 
-`Promise`
 
-#### Example
+## <a name="options.lowercase"></a>`lowercase`: Boolean
 
+* **Default value**: `true`
+
+`rage-edit` transforms all key paths and value names (not the actual data of value entry) to lowercase by default to prevent confusion. This does not affect input - you can still use all-caps paths and value names with uppercased characters.
+
+Check the [.get() method](#method.get)'s examples section for output examples.
+
+Check the [Case sensitivity](#caveats.case-sensitivity) section for more info.
+
+
+## <a name="options.format"></a>`format`: String
+
+* **Possible values**: `'simple'`, `'complex'`
+
+* **Default value**: `simple`
+
+Retrieving data from the registry poses a complication. Format of the output cannot be as straight forward as JSONs nested structure because the registry better resembles an XML tree where each node can have both a children nodes and also attributes. A Windows registry key can host subkeys as well as value entries, both of which can have the same names leading to possible collisions.
+
+Due to that `rage-edit` offers two types of output formats: `simple` and `complex`. By default `simple` is enabled globally for all calls.
+
+Check the [.get() method](#method.get)'s examples section for detailed output examples.
+
+Format type can be changed globally:
 ```js
-// Creates or rewrites value entry named 'Leader' with 'Jack Morrison' data of 'REG_SZ' type that is infered from the String data.
-// inside the key 'HKLM\Software\Overwatch'. Also creates the key if it didn't exist
-Registry.set('HKLM\\Software\\Overwatch', 'Leader', 'Jack Morrison')
-// Creates or rewrites value 'Scientists' with data 'Angela Ziegler\0Winston\0Mei-Ling Zhou' of type 'REG_MUTLI_SZ' (inferred from Array data)
-Registry.set('HKLM\\Software\\Overwatch', 'Scientists', ['Angela Ziegler', 'Winston', 'Mei-Ling Zhou'])
-// Re/writes data of default value entry.
-Registry.set('HKLM\\Software\\Overwatch', '', 'This is data of the default value entry')
-// Creates a new subkey 'Blackwatch' inside 'HKLM\Software\Overwatch' and creates default value with data 'Mysterious branch of Overwatch'
-Registry.set('HKLM\\Software\\Overwatch\\Blackwatch', '', 'Mysterious branch of Overwatch')
-```
-
-
-
-## Static properties
-
-
-**`DEFAULT = ''`** String used to represent the name of the default value.
-
-**`VALUES = '$values'`** String used for naming values key in [simple mode](#simple)
-
-
-
-
-
-
-## Constructor, instance mode
-
-### `new Registry(path)`
-
-```js
-var reg = new Registry('HKLM\\Software\\Overwatch')
-reg.get('Scientists')
-reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
-```
-
-
-
-
-## Instance methods
-
-
-### `#get([subpath][, name])`
-
-Retrieves key from the instance's path or from a given `subpath`.
-Or instead retrieves content of a value at the path if `name` is defined.
-
-#### Parameters:
-- `[subpath]` Path to a subkey where the value is stored. Optional. Defaults to `this.path`.
-- `[name]` of the value to retrieve. Optional. Default value (empty string) is retrieved if omitted.
-
-#### Returns:
-`Promise<object>`
-
-#### Example
-```js
-// Creates instance of Registry, using 'HKLM\Software\Overwatch' path for all operations by default.
-var reg = new Registry('HKLM\\Software\\Overwatch')
-// Retrieves key 'HKLM\Software\Overwatch'.
-reg.get()
-// Retrieves default value from 'HKLM\Software\Overwatch'.
-reg.get('')
-// Retrieves value 'Scientists' from 'HKLM\Software\Overwatch'.
-reg.get('Scientists')
-// Retrieves subkey 'Blackwatch' inside 'HKLM\Software\Overwatch'.
-reg.get('\\Blackwatch')
-// Retrieves default value from 'HKLM\Software\Overwatch\Backwatch'
-reg.get('\\Blackwatch', '')
-// Retrieves value 'Leader' from 'HKLM\Software\Overwatch\Backwatch'
-reg.get('\\Blackwatch', 'Leader')
-```
-
-
-
-### `#has([subpath][, name])`
-
-Just like `.get()` but returns boolean depending on existence of the sub/key or value.
-
-#### Returns:
-`Promise<bool>`
-
-
-
-### `#delete([subpath][, name])`
-
-Deletes the instance's registry key or subkey at given `subath`.
-Alternatively deletes `name`d value from the key.
-
-#### Parameters:
-- `[subpath]` Path to a subkey where the value is stored. Optional. Defaults to `this.path`.
-- `[name]` of the value to delete.
-
-#### Returns:
-`Promise`
-
-
-
-### `#set([subpath][, name[, data[, type]]])`
-
-Creates or rewrites `name`d value inside instance's path or at given `subpath` key.
-Alternatively creates subkey at `subpath` if `name` and `data` are undefined.
-
-#### Parameters
-- `[subpath]` Path of the subkey to create (or where to set value). Optional if `name` is defined. **`subpath` has to always begin with a backslash `\` otherwise it will be mistaken as `name`**
-- `[name]` of the value to create or modify. Optional if `subpath` is defined in which case no value is created, only the subkey. To modify key's default value (empty string) use `''`.
-- `[data]` to be stored in the value entry. Optional.
-- `[type]` of the stored `data`. Optional. It is inferred from the `data` if this parameter is omitted.
-
-#### Returns:
-`Promise`
-
-#### Example
-```js
-// Creates instance of Registry, using 'HKLM\Software\Overwatch' path for all operations by default.
-var reg = new Registry('HKLM\\Software\\Overwatch')
-// Creates the key (if it didn't exist)
-reg.set()
-// Creates 'disbanded' value with no data
-reg.set('disbanded')
-// Creates or rewrites value entry named 'Leader' with 'Jack Morrison' data of 'REG_SZ' type that is infered from the String data.
-// inside the key 'HKLM\Software\Overwatch'. Also creates the key if it didn't exist
-reg.set('Leader', 'Jack Morrison')
-// Creates or rewrites value 'Scientists' with data 'Angela Ziegler\0Winston\0Mei-Ling Zhou' of type 'REG_MUTLI_SZ' (inferred from Array data)
-reg.set('Scientists', ['Angela Ziegler', 'Winston', 'Mei-Ling Zhou'])
-// Re/writes data of default value entry.
-reg.set('', 'This is data of the default value entry')
-// Creates a key 'HKLM\Software\Overwatch\Blackwatch' (if it didn't exist)
-reg.set('\\Blackwatch')
-// Creates a new subkey 'Blackwatch' inside 'HKLM\Software\Overwatch' and creates default value with data Mysterious branch of Overwatch'
-reg.set('\\Blackwatch', '', 'Mysterious branch of Overwatch')
-// Creates/rewrites value 'Leader' at 'HKLM\Software\Overwatch\Backwatch'
-reg.set('\\Blackwatch', 'Leader', 'Gabriel Reyes')
-```
-
-
-## Instance properties
-
-**`path`** Full path of current key path.
-
-**`hive`** Short name of the current hive like `HKCU`.
-
-
-
-
-
-## Output format
-
-Retrieving data from the registry poses a complication. Format of the output cannot be as straight forward as JSONs nested structure because the registry better resembles an XML tree where each node can have both a children nodes and also attributes. A Windows registry key can host sub keys as well as value entries, both of which can have the same names leading to possible collisions.
-
-Due to that `rage-edit` offers two types of output formats. `simple` and `complex`. By default `simple` is enabled globally for all calls.
-
-It can be set as a global default for all method calls, or specified manually in each method call in the `options` argument.
-
-```js
-// change format globally
 Registry.format = 'complex'
-// or individually
-Registry.get('HKCR\\Directory\\shell', {format: 'complex'}
 ```
 
 
@@ -361,83 +266,530 @@ Key names are properties of the object. The key is represented by (stub of) anot
 
 Values are stored in `$values` object of `name:data` pairs, where value name is the property, value data is the content of that property, and type is omitted.
 
-*Warning: `$values` might be still conflicting since `$` is a valid character in key paths. You can change `$values` to be whatever else by changing `Registry.VALUES`. e.g. `Registry.VALUES = '__$$NO_CONFLICT_VALUES'`*
-
 So if your key has a subkey named `version` and also a value named `version`, you will be able to access both of them without collision with `output.version` and `output.$values.version`.
 
-```js
-// Registry.get('HKCR\\.jpg')
-{
-  $values: {
-    '': 'jpegfile',
-    'content type': 'image/jpeg',
-    'perceivedtype': 'image'
-  },
-  'openwithprogids': {...},
-  'persistenthandler': {...}
-}
-```
+**Warning**: `$values` might be still conflicting since `$` is a valid character in key paths. You can change `$values` to be whatever else by changing `Registry.VALUES`. e.g. `Registry.VALUES = '__$$NO_CONFLICT_VALUES'`
 
-This format is optimized for nesting to allow you to do this.
-
-*Note: `.get()` calls are not recursive by default due to performance reasons. The following snippet serves as an example of how output can be nested, but the `HKLM` hive contains enormous amounts of data and thus is not recommended to be queried recursively.*
+The following snippet serves as an example of how output can be nested, but the `HKLM` hive contains enormous amounts of data and thus is not recommended to be queried recursively.
 
 ```js
 // Gets default value (empty string) of HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\FeedManager
-var software = await Registry.get('HKLM\\software', true)
+var software = await Registry.get('HKLM/Software', { recursive: true })
 software.microsoft.windows.currentversion['Lock Screen'].feedmanager.$values['']
 ```
+
 
 ### Complex
 
 Offers comprehensive output and first and foremost contains types of value entries since every value entry is represented by `{name, data, type}` object in a `values` array.
 
-```js
-// Registry.get('HKCR\\.jpg', {format: 'complex'})
-{
-  keys: {
-    'openwithprogids': {
-      keys: {...},
-      values: [...]
-    },
-    'persistenthandler': {
-      keys: {...},
-      values: [...]
-    }
-  },
-  values: [
-    {
-      name: '',
-      data: 'jpegfile',
-      type: 'REG_SZ'
-    }, {
-      name: 'content type',
-      data: 'image/jpeg',
-      type: 'REG_SZ'
-    }, {
-      name: 'perceivedtype',
-      data: 'image',
-      type: 'REG_SZ'
-    }
-  ]
-}
-```
-
 Nesting with this format is much more verbose.
 
 ```js
 // Gets default value (empty string) of HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\FeedManager
-var software = await Registry.get('HKLM\\software', true, {format: 'complex'})
+var software = await Registry.get('HKLM/Software', { recursive: true, format: 'complex' })
 software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].keys.feedmanager.values['']
 ```
 
 
+## <a name="options.bits"></a>`bits`: Number
 
-# Caveats, edge cases & the weirdness of Windows registry
+* **Possible values**: `64`, `32`, `null`
+* **Default value**: `null`
+
+64-bit version of Windows uses `Wow6432Node` key to present a separate view of some particular keys (mostly it's the `HKEY_LOCAL_MACHINE/SOFTWARE` key) for 32-bit applications that run on a 64-bit version of Windows. In other words, when a 32-bit application queries a value under the `HKLM/SOFTWARE/Example` subkey, the application reads from the `HKLM/SOFTWARE/Wow6432Node/Example` subkey.
+
+64-bit application can get access to both 64-bit and 32-bit registry views, while 32-bit applications stuck inside of `Wow6432Node` subkeys. The `bits` option can be set to `32` or `64` to force access to 64-bit or 32-bit keys:
+
+|Condition|Requested key|Redirected to|
+|-|-|-|
+|64-bit node.js **OR** `{ bits: 64 }`|HKLM/SOFTWARE/Example|HKLM/SOFTWARE/Example|
+|64-bit node.js **OR** `{ bits: 64 }`|HKLM/SOFTWARE/Wow6432Node/Example|HKLM/SOFTWARE/Wow6432Node/Example|
+|32-bit node.js **OR** `{ bits: 32 }`|HKLM/SOFTWARE/Example|HKLM/SOFTWARE/Wow6432Node/Example|
+|32-bit node.js **OR** `{ bits: 32 }`|HKLM/SOFTWARE/Wow6432Node/Example|HKLM/SOFTWARE/Wow6432Node/Example|
+
+The format also can be changed globally:
+```js
+// Force 32-bit mode
+Registry.bits = 32
+
+// Force 64-bit mode
+Registry.bits = 64
+
+// Let Windows decide
+Registry.bits = null
+```
+
+
+## <a name="options.unicode"></a>`unicode`: Boolean
+
+* **Default value**: `false`
+
+Node.js does always expect UTF-8 output from a child process, but Windows relies on the default system's [code page](https://ss64.com/nt/chcp.html) (with English locale it is `cp437`, with Russian locale it is `cp866` and so on) which results to rendering non-ASCII characters as `?` or `�`.
+
+A possible workaround is change the console codepage to `65001`. But due to how Windows console works, changed codepage stays changed even after JS code finished its work:
+
+```
+C:\>chcp
+Active code page: 437
+
+C:\>node yourScriptThatChangesCodepage.js
+
+C:\>chcp
+Active code page: 65001
+```
+
+That may lead to unexpected results in the future (note that the problem is actual within current console instance only). That's why unicode support can't be enabled by default.
+
+To avoid that, the `unicode` option allows to change the code page to `65001` before reading and restored it right after registry data is gotten.
+
+```js
+await Registry.set('HKLM/SOFTWARE/Example', 'Unicode string', 'Unicode: Коварные закорючки ツ')
+
+-> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string')
+<- 'Unicode: ???????? ????????? ?'
+
+-> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string', { unicode: true })
+<- 'Unicode: Коварные закорючки ツ'
+```
+
+That safety slows down performance a bit, but if you're going to read a lot of unicode data from registry, it's possible to temporarily switch `rage-edit` (and concurrently the entire console instance's output) to unicode the following way:
+
+```js
+try {
+  await Registry.enableUnicode()
+  // Doing stuff with registry...
+} finally {
+  await Registry.disableUnicode()
+}
+```
+
+**Note**: this problem is actual for reading from registry only. Writing unicode data works with any codepage.
+
+
+## <a name="options.recursive"></a>`recursive`: Boolean
+
+* **Default value**: `false`
+
+By default, `.get()` calls are not recursive due to performance reasons. This can be changed by setting `recursive` option to `true`.
+
+Check the description of the [.get() method](#method.get) for examples.
+
+
+## <a name="options.isOptions"></a>`$isOptions`: Boolean
+
+**Note**: Please try to aviod cases where this option could be used.
+
+Allows to explicitly mark object as options object. Is used internally but can also be useful in some edge cases described in the [.set() method](#method.set)'s description.
+
+
+
+# <a name="methods"></a>Methods
+
+Every method accepts up to four optional arguments in the following order: `path`, `name`, `data`, `options`. If last argument is object, it's always regarded as options object (`.set()` is an exception, see [$isOptions section](#options.isOptions) above). At least one argument is required. If some of arguments is omitted, it can be specified in options object which means all the following examples do the same thing:
+
+```js
+await Registry.get('HKLM/SOFTWARE/Example', 'String')
+
+// Equals to:
+await Registry.get('HKLM/SOFTWARE/Example', {
+  name: 'String'
+})
+
+// Equals to:
+await Registry.get({
+  path: 'HKLM/SOFTWARE/Example',
+  name: 'String'
+})
+```
+```js
+await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', 'content', { type: 'REG_SZ' })
+
+// Equals to:
+await Registry.set({
+  path: 'HKLM/SOFTWARE/Example',
+  name: 'StringVal',
+  data: 'content',
+  type: 'REG_SZ'
+})
+
+// Equals to:
+// (Warning: this is not recommended way of using .set() and showed for demonstration purposes only!
+//  Please stick with one of the ways described above)
+await Registry.set('HKLM/SOFTWARE/Example', {
+  $isOptions: true, // Explicitly mark object as options object. Check the '$isOptions' section for details.
+  name: 'StringVal',
+  data: 'content',
+  type: 'REG_SZ'
+})
+
+// Equals to:
+// (Warning: this is not recommended way of using .set() and showed for demonstration purposes only!
+//  Please stick with one of the ways described above)
+await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', {
+  $isOptions: true, // Explicitly mark object as options object. Check the '$isOptions' section for details.
+  data: 'content',
+  type: 'REG_SZ'
+})
+
+// A better alternative for two last examples:
+await Registry.set('HKLM/SOFTWARE/Example',
+  { StringVal: 'content' }, // Data object
+  { type: 'REG_SZ' }        // Options object
+)
+```
+
+Methods always return [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise):
+
+```js
+let str = await Registry.get('HKLM/SOFTWARE/Example', 'String')
+console.log(str)
+
+// Equals to:
+Registry
+  .get('HKLM/SOFTWARE/Example', 'String')
+  .then(str => console.log(str))
+```
+
+**Note:** the following registry content is used in all example sections:
+```
+HKEY_LOCAL_MACHINE\SOFTWARE\Example
+├── (Default)   REG_SZ      (value not set)
+├── StringVal   REG_SZ      content
+├── NumberVal   REG_DWORD   0x0000002f(47)
+└┬─ Subkey
+ ├── (Default)        REG_SZ   Some default value
+ └── Another string   REG_SZ   Another value
+```
+
+
+## <a name="method.get"></a>.get([path [, name]][, options])
+
+* Supported options: `path, name, recursive, bits, format, lowercase, unicode`
+
+Retrieves content of `path`. Returned object contains subkeys list and values under the `$values` key. To retrive subkeys content, set `recursive` option to `true`.
+
+If `name` is set, the specified name will be returned. In order to work with `(Default)` value, set `name` to `''` (empty string).
+
+`undefined` is returned if either `path` or `name` doesn't exist.
+
+Read value is automatically converted into matching JS type according with a table from [`type` section](#options.type).
+
+**Note**: `REG_QWORD` values are regarded as `BigInt`s if your environment supports them (Node.js v10.4 / Chromium 67), otherwise value in hex `0x` notation is returned.  
+In other words, `REG_QWORD 0x000004d2 (1234)` value is read as `1234n` in node.js v10.4+ and as `'0x4D2'` in node.js v10.3-.
+
+
+### Examples:
+
+```js
+// Getting key structre
+
+-> await Registry.get('HKLM/SOFTWARE/Example')
+<- {
+    '$values': {
+      stringval: 'content',
+      numberval: 47 // Name is in lower case because `lowercase` is `true` by default
+    },
+    subkey: {
+      '$values': {} // Empty because `recursive` is `false` by default
+    }
+  }
+
+-> await Registry.get('HKLM/SOFTWARE/Example', { lowercase: false })
+<- {
+    '$values': {
+      StringVal: 'content',
+      NumberVal: 47
+    },
+    Subkey: {
+      '$values': {}
+    }
+  }
+
+-> await Registry.get('HKLM/SOFTWARE/Example', { recursive: true })
+<- {
+    '$values': {
+      stringval: 'content',
+      numberval: 47
+    },
+    subkey: {
+      '$values': {
+        '': 'Some default value',
+        'another string': 'Another value'
+      }
+    }
+  }
+
+-> await Registry.get('HKLM/SOFTWARE/Example', { format: 'complex' })
+<- {
+    keys: {
+      subkey: {
+        keys: {},
+        values: []
+      }
+    },
+    values: [
+      {
+        name: 'stringval',
+        type: 'REG_SZ',
+        data: 'content'
+      },
+      {
+        name: 'numberval',
+        type: 'REG_DWORD',
+        data: 47
+      }
+    ]
+  }
+```
+```js
+// Getting value
+
+-> await Registry.get('HKLM/SOFTWARE/Example', 'NumberVal')
+<- 47
+
+-> await Registry.get('HKLM/SOFTWARE/Example/Subkey', '')
+<- 'Some default value'
+
+-> await Registry.get('HKLM/SOFTWARE/Fake path')
+-> await Registry.get('HKLM/SOFTWARE/Example', 'Something that does not exist')
+<- undefined
+```
+
+
+## <a name="method.has"></a>.has([path[, name]][, options])
+
+
+* Supported options: `path, name, bits`
+
+Just like `.get()` but returns boolean depending on existence of the key or value.
+
+
+### Examples:
+
+```js
+-> await Registry.has('HKLM/SOFTWARE/Example')
+-> await Registry.has('HKLM/SOFTWARE/Example', 'NumberVal')
+-> await Registry.has('HKLM/SOFTWARE/Example', 'numberval')
+<- true
+
+-> await Registry.has('HKLM/SOFTWARE/Fake path')
+-> await Registry.has('HKLM/SOFTWARE/Example', 'Something that does not exist')
+<- false
+
+// Checks 'HKLM\SOFTWARE\Wow6432Node\Example
+-> await Registry.has('HKLM/SOFTWARE/Example', { bits: 32 })
+<- false
+```
+
+
+## <a name="method.set"></a>.set(...args)
+
+* Supported options: `path, name, data, type, bits`
+* Method overloads:
+  * .set(`options`: *Object*)
+  * .set(`path`: *String*, `complexData`: *Object*)
+  * .set(`path`: *String*, `name`: *String*, `data`: *Any*)
+  * .set(`path`: *String*, `name`: *String*, `data`: *Any*, `options`: *Object*)
+
+Creates or rewrites a `key` or `name`d value inside a key at the given `path`.
+
+If a key at the path doesn't exist it will be created.
+
+If `type` option is ommited, value type is automatically inferred as described in the [type section](#options.type).
+
+Doesn't return anything.
+
+**Note**: `complexData` is a object (with nested data) that will be turned into a bunch of values and subkeys. In this case the `type` option has no power.
+
+### Examples:
+
+```js
+// Create string value (as REG_SZ)
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'StringVal', 'content')
+// Same as:
+await Registry.set({
+  path: 'HKEY_LOCAL_MACHINE/SOFTWARE/Example',
+  name: 'StringVal',
+  data: 'content'
+})
+
+// Create dword value (as REG_DWORD)
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'NumberVal', 47)
+
+// Explicitly store integer as a string
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'NumberVal', 47, { type: 'REG_SZ' })
+
+// Create default value entry
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example/Subkey', '', 'Some default value')
+
+// Create array (as REG_MULTI_SZ)
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'ArrayVal', ['Item 1', 'Item 2', 'Item 3']),
+
+// Create complex structure based on JS object
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', {
+  'StringVal': 'content',
+  'NumberVal': 47,
+  'Subkey': {
+    '': 'Some default value',
+    'Another string': 'Another value'
+  }
+})
+
+// The second argument is regarded as subkey name if 'data' is object. Same as above
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE', 'Example', {
+  'String': 'text',
+  'Number': 47,
+  'Subkey': {
+    '': 'Some default value',
+    'Another string': 'Another value'
+  }
+})
+```
+```js
+// Edge case: create empty key under the 32-bit registry environment.
+// A possible solution is set '$isOptions` option.
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/New key', { bits: 32, $isOptions: true})
+
+// But there's the better way to do the same:
+await Registry.set({
+  path: 'HKEY_LOCAL_MACHINE/SOFTWARE/New key',
+  bits: 32
+})
+```
+
+
+## <a name="method.delete"></a>.delete([path[, name]][, options])
+
+Deletes a registry key at the given `path` or deletes a `name`d value entry within this key.
+
+Doesn't return anything.
+
+* Supported options: `path, name, bits`
+
+
+### Examples:
+
+```js
+// Delete value 'NumberVal' in 'HKLM\SOFTWARE\Wow6432Node\Example'
+await Registry.delete('HKLM/SOFTWARE/Example', 'NumberVal', { bits: 32 })
+
+// Delete value 'NumberVal' in 'HKLM\SOFTWARE\Example'
+await Registry.delete('HKLM/SOFTWARE/Example', 'NumberVal')
+
+// Delete default value in 'HKLM\SOFTWARE\Example'
+await Registry.delete('HKLM/SOFTWARE/Example', '')
+
+// Delete key 'HKLM\SOFTWARE\Example' and all of its subkeys and values
+await Registry.delete('HKLM/SOFTWARE/Example')
+```
+
+
+# <a name="static"></a>Static properties
+
+
+## <a name="static.values"></a>`VALUES`
+
+* **Description:** String used for naming values key in [simple mode](#options.format)
+* **Default value:** `$values`
+
+
+## <a name="static.isOptions"></a>`IS_OPTIONS`
+
+* **Description:** String used to represent the [$isOptions](#options.isOptions) key
+* **Default value:** `$isOptions`
+
+
+# <a name="instance"></a>Constructor, instance mode
+
+It's possible to create a new `Registry` instance with some defaults overridden with your own.
+
+In the instance mode every method described in the [methods section](#methods) works just like it's expected to work. The only option that behaves different is `path`. See section below for details.
+
+
+## <a name="instance.constructor"></a>`new Registry([path,][options])`
+
+
+### `path`
+
+[Path](#options.path) represents a root path to a key. Can be set through a first argument, or as a `path` option.
+
+If `path` is ommited, every method described in the [methods section](#methods) works just like it's expected to work.
+
+If `path` is set, this option becomes optional in every method. Though if first argument is a string and starts with a slash, it's regarded as a relative path.
+
+
+### `options`
+
+Object that can contain every option described in the [options section](#options)
+
+
+## <a name="instance.properties"></a>Instance properties
+
+* **`path`** Full path of current key path.
+* **`hive`** Short name of the current hive like `HKCU`
+* **`hiveLong`** Long name of the current hive like `HKEY_CURRENT_USER`
+
+**Note**: Those properties are `undefined` is `path` was not specified.
+
+
+## <a name="instance.examples"></a>Examples
+
+```js
+// Work inside of 'HKLM/SOFTWARE/Example' key
+let reg = new Registry('HKLM/SOFTWARE/Example')
+
+// Write and read inside of 'HKLM/SOFTWARE/Example'
+reg.set('StringVal', 'content')
+reg.get('StringVal')
+
+// Write and read inside of 'HKLM/SOFTWARE/Example/Subkey'
+reg.set('/Subkey', '', 'Some default value')
+reg.get('/Subkey', '')
+```
+```js
+// Change options only
+let regStrict = new Registry({ format: 'complex', lowercase: false, recursive: true })
+
+-> await regStrict.get('HKLM/SOFTWARE/Example')
+<- {
+    keys: {
+      Subkey: {
+        keys: {},
+        values: [
+          {
+            name: '',
+            type: 'REG_SZ',
+            data: 'Some default value'
+          },
+          <...>
+        ]
+      }
+    },
+    values: [
+      <...>
+    ]
+  }
+```
+```js
+// Both path and options
+let ureg = new Registry('HKLM/SOFTWARE/Example', { unicode: true })
+
+ureg.get('/Subkey', 'Some unicode value')
+// Same as:
+Registry.get('HKLM/SOFTWARE/Example/Subkey', 'Some unicode value', { unicode: true })
+
+// Options still can be overridden
+ureg.get('/Subkey', 'Some normal value', { unicode: false })
+```
+
+
+# <a name="caveats"></a>Caveats, edge cases & the weirdness of Windows registry
 
 Windows registry has its fair share of footguns that you should be aware of. Not to mention the danger of damaging keys and values that are critical for the proper operation of the OS.
 
-### Friendly reminder about HKCR, HKLM, 64b and Wow6432Nodes
+
+### <a name="caveats.reminder"></a>Friendly reminder about HKCR, HKLM, 64-bit and Wow6432Nodes
 
 `HKCR` is a pointer to `HKLM\Software\Classes`. Use it to access all users.
 
@@ -447,48 +799,26 @@ Therefore
 
 `HKCU\Software\Classes` is a pointer to `HKUS\${UserSid}\Software\Classes` which is another pointer to `HKUS\${UserSid}_Classes`.
 
-But on on 64b it points to subkey `Wow6432Nodes`, so `HKUS\${UserSid}\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64b systems.
+But on on 64-bit it points to subkey `Wow6432Nodes`, so `HKUS\${UserSid}\Software\Classes` is a pointer to `HKUS\${UserSid}_Classes\Wow6432Node` on 64-bit systems.
 
 Example:
 
-|original key|pointer to|b|
+|Original key|Pointer to|bit|
 |-|-|-|
-|`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\CLSID`|32b|
-|`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\Wow6432Node\CLSID`|64b|
+|`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\CLSID`|32-bit|
+|`HKCU\Software\Classes\CLSID`|`HKUS\${UserSid}_Classes\Wow6432Node\CLSID`|64-bit|
 
 More info [here](https://mintywhite.com/vista/hkcr-hkcu-hklm-hku-hkcc-registry-root-keys/) and [here](https://msdn.microsoft.com/en-gb/library/aa384253%28v=VS.85%29.aspx?f=255&MSPPError=-2147217396
 )
 
-### Default values
 
-**Every key has a default value (empty string) which is represented as an empty string**. I.e. name of the value entry is empty string `''`. You might also come across it as a `(Default)` in the `regedit` program or in `reg` command.
+### <a name="caveats.default-values"></a>Default values
+
+**Every key has a default value (empty string) which is represented as an empty string**. I.e. name of the value entry is empty string `''`. You might also come across it as a `(Default)` in the `regedit` program or in `reg` command. It is by default of type `REG_SZ`.
 
 ```js
 (await Registry.get(path)).$values[''] // value of the default value at given path
 await Registry.get(path, '') // get default value from the path
-await Registry.set(path, '', 'data of the default value') // set default value's data
-```
-
-It is by default of type `REG_SZ`.
-
-Creation of a new key also creates default value inside it. The value's name is an empty string `''` and the data content is also an empty string.
-As long as the default value has any data, it will act as any other value and will show up in `getValues()`.
-
-```js
-await Registry.set(path)
-await Registry.has(path, '') // true - default value exists in this key
-await Registry.get(path, '') // '' - default value has data of an empty string
-(await Registry.get(path)).$values // [''] - list of values in this key, so far only the default value
-```
-practical example:
-```js
-// creates new key and default value '' of type REG_SZ
-await Registry.set('HKLM\\SOFTWARE\\Overwatch')
-// creates or updates default value of type REG_SZ, inside key HKLM\SOFTWARE\Overwatch (also creates the key if it doesn't exists) 
-await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
-// creates or updates default value of type REG_EXPAND_SZ, inside key HKLM\SOFTWARE\Overwatch (also creates the key if it doesn't exists)
-await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adventurers, oddities...', 'REG_EXPAND_SZ')
-// sidenote: value name is '', value data is 'Soldiers, scientists, adventurers, oddities...')
 ```
 
 **Default value cannot be deleted**. Attempting to do so (`Registry.delete(path, '')`) will not actually delete the entry, but only its data. Or rather it will set the data to some sort of `undefined` or `null` (can be seen as `(value not set)` in `regedit`), which is unique to the default value.
@@ -497,13 +827,25 @@ In this state, the default value returns `undefined` when queried with `get()` i
 
 ```js
 await Registry.delete(path, '')
-await Registry.has(path, '') // true - the value always exists
-await Registry.get(path, '') // undefined - the value has no data
+await Registry.has(path, '') // true - default value always exists
+await Registry.get(path, '') // undefined - default value has no data
 (await Registry.get(path)).$value // [] - empty array
 ```
 
+Practical example:
+```js
+// Creates new key
+await Registry.set('HKLM/SOFTWARE/Overwatch')
 
-### Restricted access, administrator permissions
+// Creates or updates default value of type REG_SZ, inside key HKLM\SOFTWARE\Overwatch (also creates the key if it doesn't exists) 
+await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
+
+// Creates or updates default value of type REG_EXPAND_SZ, inside key HKLM\SOFTWARE\Overwatch (also creates the key if it doesn't exists)
+await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...', { type: 'REG_EXPAND_SZ' })
+```
+
+
+### <a name="caveats.permissions"></a>Restricted access, administrator permissions
 
 Write and delete operation outside `HKCU` hive (Current user) as well as reading certain hives require the app to run with administrator privileges.
 
@@ -518,24 +860,27 @@ try {
 }
 ```
 
-### Error suppresion
+
+### <a name="caveats.error-suppresion"></a>Error suppresion
 
 `rage-edit` deliberately suppresses error `The system was unable to find the specified registry key or value` that is thrown by the `reg` command when a non-existent value or key is queried. Instead the promise is resolve with `undefined`.
 
 All other errors (especially `Access is denied`) are thrown as expected and the promise will be rejected.
 
-### Case sensitivity
+
+### <a name="caveats.case-sensitivity"></a>Case sensitivity
 
 **Windows Registry is case insensitive.** That applies to key paths and value names. But there are some edge cases. `rage-edit` by default transforms all key paths and value names (*not the actual data of value entry*) to lowercase by default to prevent confusion.
 
 This does not affect input - you can still use all-caps paths and value names with uppercased characters.
 
 ```js
-// both ways work and return the same value
+// Both ways work and return the same value
 await Registry.get('HKCR\\.exe', 'Content Type') // returns the data
 await Registry.get('hkcr\\.exe', 'content type') // returns the data
 await Registry.get('HKCR\\.exe\\PersistentHandler') // returns the data
 await Registry.get('HkCr\\.exe\\persistentHANDLER') // returns the data
+
 var key = await Registry.get('HKCR\\.exe')
 key.persistenthandler // contains the data
 key.PersistentHandler // undefined
@@ -546,12 +891,14 @@ key.$values['Content Type'] // undefined
 The lowercasing can be turned off
 
 ```js
-// globally
+// Globally
 Registry.lowercase = false
-// or per request
-var key = await Registry.get('HKCR\\.exe', {lowercase: false})
+
+// Or per request
+var key = await Registry.get('HKCR\\.exe', { lowercase: false })
 key.$values['Content Type']
 ```
+
 
 #### Why?
 
@@ -597,52 +944,36 @@ var key = await Registry.get('HKLM\\SOFTWARE\\MyApp')
 var version = key.$values['VERSION'] || key.$values['Version'] || key.$values['version']
 ```
 
-### Type infering and conversions
+
+### <a name="caveats.type-infering"></a>Type infering and conversions
 
 `rage-edit` automatically picks a registry value type for you, based in the data you're storing, if you don't specify the type for yourself.
 
 ```js
-Registry.setValue('HKLM\\Some\\Path', 'name', 'string', 'REG_SZ')
+Registry.setValue('HKLM\\Some\\Path', 'name', 'string', { type: 'REG_SZ' })
 Registry.setValue('HKLM\\Some\\Path', 'name', 'string')
 
-Registry.setValue('HKLM\\Some\\Path', 'name', '123', 'REG_DWORD')
-Registry.setValue('HKLM\\Some\\Path', 'name', 123, 'REG_DWORD')
+Registry.setValue('HKLM\\Some\\Path', 'name', '123', { type: 'REG_DWORD' })
+Registry.setValue('HKLM\\Some\\Path', 'name', 123, { type: 'REG_DWORD' })
 Registry.setValue('HKLM\\Some\\Path', 'name', 123)
 
-Registry.setValue('HKLM\\Some\\Path', 'name', 'one\0two\0three', 'REG_MULTI_SZ')
-Registry.setValue('HKLM\\Some\\Path', 'name', ['one', 'two', 'three'], 'REG_MULTI_SZ')
+Registry.setValue('HKLM\\Some\\Path', 'name', 123n, { type: 'REG_QWORD' })
+Registry.setValue('HKLM\\Some\\Path', 'name', 123n)
+
+Registry.setValue('HKLM\\Some\\Path', 'name', 'one\0two\0three', { type: 'REG_MULTI_SZ' })
+Registry.setValue('HKLM\\Some\\Path', 'name', ['one', 'two', 'three'], { type: 'REG_MULTI_SZ' })
 Registry.setValue('HKLM\\Some\\Path', 'name', ['one', 'two', 'three'])
 
-Registry.setValue('HKLM\\Some\\Path', 'name', 'hello', 'REG_BINARY')
+Registry.setValue('HKLM\\Some\\Path', 'name', 'hello', { type: 'REG_BINARY' })
 Registry.setValue('HKLM\\Some\\Path', 'name', Buffer.from('hello'))
 ```
 
 
-### REG_DWORD and REG_QWORD
-
-Windows Registry allows storing 32b values as DWORDS and 64b values as QWORDS.
-
-Javascript Number only support 53 bit integers.
-
-DWORD values are automatically converted to and from Number by `rage-edit` automatically. 
-
-QWORD values cannot be converted due to JS limitations. The `reg` command also retrieves the values in hex `Ox` notation and `rage-edit` does not change that.
-
-```js
-var value = 1234
-
-Registry.set('HKLM\\Some\\Path', 'DwordValue', value)
-Registry.set('HKLM\\Some\\Path', 'QwordValue', value)
-
-Registry.get('HKLM\\Some\\Path', 'DwordValue') // 1234
-Registry.get('HKLM\\Some\\Path', 'QwordValue') // '0x4D2'
-```
-
-
-## Join the discussion
+## <a name="discussion"></a>Join the discussion
 
 We're at [Discord](https://discord.gg/v2mUmeD) and [Gitter](https://gitter.im/MikeKovarik/rage-edit). Come join us to discuss features, bugs and more.
 
-## Credits
+
+## <a name="credits"></a>Credits
 
 Made by Mike Kovařík, Mutiny.cz

@@ -1,6 +1,7 @@
 import {Registry} from './Registry.mjs'
 import cp from 'child_process'
 import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
+import {ARG_64BIT, ARG_32BIT} from './constants.mjs'
 
 
 let ERR_NOT_FOUND
@@ -10,13 +11,16 @@ export let VALUE_NOT_SET = undefined
 let errMessagePromise
 let defaultValuesPromise
 
+// Prevents old node.js versions from crashing
+export var BigInt = global.BigInt || undefined
+  
 function getErrorLine(stderr) {
 	return stderr.trim().split('\r\n')[0]
 }
 
 function setDefaultValues(stdout) {
 	// indexOf() because it's fastest.
-	let iNextStr = stdout.indexOf('\r\n', 1)
+	let iNextStr          = stdout.indexOf('\r\n', 1)
 	let iNameBracketOpen  = stdout.indexOf('(', iNextStr)
 	let iNameBracketClose = stdout.indexOf(')', iNameBracketOpen)
 	let iValBracketOpen   = stdout.indexOf('(', iNameBracketClose)
@@ -56,6 +60,7 @@ execute = async args => {
 
 // Actual execute() function.
 var _execute = async args => {
+	debug('[util.execute]', args)
 	var {stdout, stderr} = await spawn('reg.exe', args)
 	// REG command has finished running, resolve result or throw error if any occured.
 	if (stderr.length === 0) return stdout
@@ -134,6 +139,11 @@ export function inferAndStringifyData(data, type) {
 			if (type === undefined)
 				type = DWORD
 			break
+		case BigInt:
+			// Set REG_QWORD type if none is specified.
+			if (type === undefined)
+				type = QWORD
+			break
 		case String:
 		//default:
 			// Set REG_SZ type if none is specified.
@@ -157,8 +167,8 @@ export function parseValueData(data, type) {
 		data = Buffer.from(data, 'hex')
 	if (type === DWORD)
 		data = parseInt(data)
-	//if (type === QWORD && convertQword)
-	//	data = parseInt(data)
+	if (type === QWORD && (typeof BigInt === "function"))
+		data = BigInt(data)
 	if (type === MULTI_SZ)
 		data = data.split('\\0')
 	return [data, type]
@@ -185,11 +195,73 @@ export function sanitizeType(type) {
 	return type
 }
 
-export function getOptions(userOptions) {
-	var {lowercase, format} = Registry
-	var defaultOptions = {lowercase, format}
-	if (userOptions)
-		return Object.assign(defaultOptions, userOptions)
-	else
-		return defaultOptions
+function isArrayLike(something) {
+	if (something === undefined)
+		 return false
+	return Array.isArray(something)
+		|| Buffer.isBuffer(something)
+		|| something.constructor === Uint8Array
+		//|| something.constructor === ArrayBuffer
+}
+
+export function isObject(something) {
+	return typeof something === 'object' && !isArrayLike(something)
+}
+
+export function debug(...args) {
+	if (!Registry.debug) return
+	console.log(' [rage-edit]', ...args)
+}
+
+// Converts 'options.bits' into valid 'reg.exe' argument
+function bitsToArg(bits) {
+	if (!bits)
+	  return undefined
+	switch (bits) {
+		case 64: return ARG_64BIT
+		case 32: return ARG_32BIT
+	}
+	return undefined
+}
+
+// Accepts ([path[, name[, data[, type]]]][, options]) and turns them into a single object
+export function getOptions(args = [], includeDefaults = true) {
+	debug('[util.getOptions] -->', args, {includeDefaults})
+	// Parse arguments
+	var userOptions = {}
+	if (args.length === 1 && isObject(args[0])) {
+		userOptions = args.pop()
+
+		// Explicitly mark first object as an options object
+		userOptions[Registry.IS_OPTIONS] = true
+	}
+	else if (isObject(args[args.length - 1]))
+		userOptions = args.pop()
+
+	// Destructure arguments
+	var [path, name, data] = args
+
+	// Get default values if needed
+	var { lowercase, format, bits } = includeDefaults ? Registry : {}
+
+	// Path, name, and data passed as args can be overridden
+	//   with the same named options passed in options obejct.
+	var defaultOptions = { lowercase, format, bits, path, name, data }
+
+	// Merge default options with user options
+	var options = Object.assign({}, defaultOptions, userOptions)
+
+	// Allow both forward slashes and backslashes
+	if (options.path)
+		options.path = sanitizePath(options.path)
+
+	// Convert 'bits' value into a valid 'reg.exe' argument
+	if (options.bits !== undefined)
+		options.bitsArg = bitsToArg(options.bits)
+
+	// Remove all 'undefined' options
+	Object.keys(options).forEach((key) => (options[key] === undefined) && delete options[key])
+
+	debug('[util.getOptions] <--', options)
+	return options
 }

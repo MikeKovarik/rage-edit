@@ -1,76 +1,109 @@
 import {HIVES, shortenHive, extendHive} from './constants.mjs'
-import {sanitizePath, spawn} from './util.mjs'
+import {sanitizePath, spawn, getOptions} from './util.mjs'
+import { debug } from './util.mjs';
 
 
 // Collection of static methods for interacting with any key in windows registry.
 // Also a constructor of an object with access to given single registry key.
 export class Registry {
 
-	constructor(path, options) {
-		path = sanitizePath(path)
-		if (path.endsWith('\\'))
-			path = path.slice(-1)
-		this.path = path
-		var hive = path.split('\\').shift()
-		this.hive = shortenHive(hive)
-		if (!HIVES.includes(this.hive))
-			throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
-		this.hiveLong = extendHive(hive)
-		this.options = Object.assign({}, Registry.options, options)
+	constructor(...args) {
+		debug('[new Registry()] -->', args)
+		var options = getOptions(args)
+
+		// Path is optional
+		if (options.path) {
+			if (options.path.endsWith('\\'))
+				options.path = options.path.slice(-1)
+			this.path = options.path
+
+			var hive = options.path.split('\\').shift()
+			this.hive = shortenHive(hive)
+			if (!HIVES.includes(this.hive))
+				throw new Error(`Invalid hive '${this.hive}', use one of the following: ${HIVES.join(', ')}`)
+			this.hiveLong = extendHive(hive)
+		}
+
+		this.options = options
+		debug('[new Registry()] <--', this)
 	}
 
 	_formatArgs(args) {
-		if (args.length === 0)
-			return [this.path]
-		// TODO: simplified, lowercase
-		var firstArg = sanitizePath(args[0])
-		if (firstArg.startsWith('.\\'))
-			args[0] = this.path + firstArg.slice(1)
-		else if (firstArg.startsWith('\\'))
-			args[0] = this.path + firstArg
-		else
-			args.unshift(this.path)
-		return args
+		debug('[Registry._formatArgs] -->', args)
+		var options = Object.assign({}, this.options, {[Registry.IS_OPTIONS]: true})
+		if (args.length === 0) {
+			options.path = this.path
+			debug('[Registry._formatArgs] <--', options)
+			return options
+		}
+
+		// Path is optional
+		if (this.path) {
+			if (typeof args[0] == 'string') {
+				args[0] = sanitizePath(args[0])
+
+				if (args[0].startsWith('.\\'))
+					args[0] = this.path + args[0].slice(1)
+				else if (args[0].startsWith('\\'))
+					args[0] = this.path + args[0]
+				else
+					args = [this.path, ...args]
+			}
+		}
+
+		// 'false' is for not including default values (such as 'lowercase') from 'Registry'
+		var userOptions = getOptions(args, false)
+		options = Object.assign({}, options, userOptions)
+
+		debug('[Registry._formatArgs] <--', options)
+		return options
+	}
+
+	static async getCodePage() {
+		var {stdout} = await spawn('cmd.exe', ['/c', 'chcp.com'])
+		var cp = Number(stdout.split(':')[1])
+		if (Number.isNaN(cp)) throw new Error(`Can't get current code page`)
+		return cp
 	}
 
 	static async setCodePage(encoding) {
 		try {
-			await spawn('cmd.exe', ['/c', 'chcp', encoding])
+			await spawn('cmd.exe', ['/c', 'chcp.com', encoding])
 		} catch (e) {
 			throw new Error(`Invalid code page: ${encoding}`)
 		}
 	}
 
 	static async enableUnicode() {
-		if (this.unicode) return
-		var {stdout} = await spawn('cmd.exe', ['/c', 'chcp'])
-		var cp = Number(stdout.split(':')[1])
-		if (Number.isNaN(cp)) throw new Error(`Can't get current code page`)
-		this.lastCodePage = cp
-		this.unicode = true
+		if (this.lastCodePage) return false
+		this.lastCodePage = await this.getCodePage()
+		await this.setCodePage(65001)
+		return true
 	}
 
 	static async disableUnicode() {
-		if (!this.unicode) return
+		if (!this.lastCodePage) return false
 		await this.setCodePage(this.lastCodePage)
 		this.lastCodePage = undefined
-		this.unicode = false
+		return true
 	}
 
 }
 
+// Needed for tests only
+Registry._argsToOpts = (...args) => getOptions(args)
+
+Registry.IS_OPTIONS = '$isOptions'
 Registry.VALUES = '$values'
 Registry.DEFAULT = ''
-
-
-Registry.unicode = false
-Registry.lastCodePage
 
 // Only names and paths are affected, not the data
 Registry.lowercase = true
 // Calls return simplified output format by default.
 // Can be 'simple', 'complex', (TODO) 'naive'
 Registry.format = 'simple'
+// By default 'bits' depend on node.js version
+Registry.bits = null
 
 Registry.FORMAT_SIMPLE = 'simple'
 Registry.FORMAT_COMPLEX = 'complex'

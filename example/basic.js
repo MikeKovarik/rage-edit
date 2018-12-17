@@ -16,7 +16,7 @@ async function main() {
 	// The static way 
 	//await Registry.set('HKLM\\SOFTWARE\\Overwatch')
 	//console.log('HKLM\\SOFTWARE\\Overwatch', 'created')
-	await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adventurers, oddities...', 'REG_EXPAND_SZ')
+	await Registry.set('HKLM\\SOFTWARE\\Overwatch', '', 'Soldiers, scientists, adventurers, oddities...', {type: 'REG_EXPAND_SZ'})
 	console.log('HKLM\\SOFTWARE\\Overwatch', 'created and default value set')
 	await Registry.set('HKLM\\SOFTWARE\\Overwatch', 'Leader', 'Jack Morrison')
 	console.log('HKLM\\SOFTWARE\\Overwatch', 'Leader value set')

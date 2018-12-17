@@ -19,7 +19,8 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "test": "mocha test"
+    "test": "mocha test",
+    "test-bail": "mocha test --bail"
   },
   "devDependencies": {
     "chai": "^4.1.2",

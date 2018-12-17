@@ -20,6 +20,6 @@ async function registerExtension(ext, exePath, appName, fileName, icon, appKey) 
 	var dotExt = `.${ext}`
 	await Registry.set(`${base}\\.${ext}`, '', appKey)
 	await Registry.set(`${base}\\${appKey}`, '', fileName)
-	await Registry.set(`${base}\\${appKey}\\shell\\open\\command`, '', `${exePath} "%1"`, 'REG_EXPAND_SZ')
+	await Registry.set(`${base}\\${appKey}\\shell\\open\\command`, '', `${exePath} "%1"`, {type: 'REG_EXPAND_SZ'})
 	await Registry.set(`${base}\\${appKey}\\DefaultIcon`, '', icon)
 }
