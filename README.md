@@ -707,7 +707,7 @@ It's possible to create a new `Registry` instance with some defaults overridden 
 In the instance mode every method described in the [methods section](#methods) works just like it's expected to work. The only option that behaves different is `path`. See section below for details.
 
 
-## <a name="instance.constructor"></a>`new Registry([path, ][options])`
+## <a name="instance.constructor"></a>`new Registry([path,][options])`
 
 
 ### `path`
