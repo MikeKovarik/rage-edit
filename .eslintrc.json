@@ -1,0 +1,25 @@
+{
+	"root": true,
+	"parserOptions": {
+		"ecmaVersion": 2018,
+		"sourceType": "module",
+		"ecmaFeatures": {
+			"impliedStrict": true
+		}
+	},
+	"extends": "eslint:recommended",
+	"env": {
+		"es6": true,
+		"node": true,
+		"mocha": true
+	},
+	"rules": {
+		"indent": ["error", "tab", {
+			"SwitchCase": 1
+		}],
+		"no-fallthrough": 0,
+		"no-console": 0,
+		"no-case-declarations": 0,
+		"no-redeclare": 0
+	}
+}
