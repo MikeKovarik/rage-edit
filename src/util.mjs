@@ -1,6 +1,6 @@
 import {Registry} from './Registry.mjs'
 import cp from 'child_process'
-import {SZ, MULTI_SZ, EXPAND_SZ, DWORD, QWORD, BINARY, NONE} from './constants.mjs'
+import {SZ, MULTI_SZ, DWORD, QWORD, BINARY} from './constants.mjs'
 import {ARG_64BIT, ARG_32BIT} from './constants.mjs'
 
 
@@ -197,7 +197,7 @@ export function sanitizeType(type) {
 
 function isArrayLike(something) {
 	if (something === undefined)
-		 return false
+		return false
 	return Array.isArray(something)
 		|| Buffer.isBuffer(something)
 		|| something.constructor === Uint8Array

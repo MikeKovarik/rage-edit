@@ -1,4 +1,4 @@
-import {execute, sanitizePath, getOptions, debug} from './util.mjs'
+import {execute, getOptions, debug} from './util.mjs'
 import {Registry} from './Registry.mjs'
 
 
@@ -47,13 +47,14 @@ Registry.deleteKey = async function({path, bitsArg}) {
 // Deletes single value entry inside the key (or default value if no name given).
 Registry.deleteValue = async function({path, name, bitsArg}) {
 	debug('[delete.deleteValue]', {path, name, bitsArg})
+	var execArgs
 	if (name === undefined) {
 		name = Registry.DEFAULT
 	}
 	if (name === Registry.DEFAULT)
-		var execArgs = ['delete', path, '/ve', '/f']
+		execArgs = ['delete', path, '/ve', '/f']
 	else
-		var execArgs = ['delete', path, '/v', name, '/f']
+		execArgs = ['delete', path, '/v', name, '/f']
 	if (bitsArg)
 		execArgs.push(bitsArg)
 	// Note: Not returning, the output of the reg command saying 'operation completed successfully'.
