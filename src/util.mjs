@@ -216,7 +216,7 @@ export function debug(...args) {
 // Converts 'options.bits' into valid 'reg.exe' argument
 function bitsToArg(bits) {
 	if (!bits)
-	  return undefined
+		return undefined
 	switch (bits) {
 		case 64: return ARG_64BIT
 		case 32: return ARG_32BIT

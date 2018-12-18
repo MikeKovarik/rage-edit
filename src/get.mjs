@@ -23,10 +23,11 @@ Registry.get = async function(...args) {
 		var isUnicodeTemporaryEnabled = await Registry.enableUnicode()
 
 	try {
+		var result
 		if (options.name !== undefined)
-			var result = await Registry.getValue(options)
+			result = await Registry.getValue(options)
 		else
-			var result = await Registry.getKey(options)
+			result = await Registry.getKey(options)
 	} finally {
 		// Disable unicode if needed
 		if (options.unicode && isUnicodeTemporaryEnabled)
@@ -48,12 +49,13 @@ Registry.has = function(...args) {
 
 Registry.getKey = async function({path, recursive, bitsArg, format, lowercase}) {
 	debug('[get.getKey]', {path, recursive, bitsArg, format, lowercase})
+	var execArgs
 	if (recursive)
-		var execArgs = ['query', path, '/s']
+		execArgs = ['query', path, '/s']
 	else
-		var execArgs = ['query', path]
+		execArgs = ['query', path]
 	if (bitsArg)
-	  execArgs.push(bitsArg)
+		execArgs.push(bitsArg)
 	var result = await execute(execArgs)
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
@@ -63,8 +65,8 @@ Registry.getKey = async function({path, recursive, bitsArg, format, lowercase}) 
 	// convert the query path to full path.
 	var fullPath = extendKeyPath(path)
 	var trimBy = fullPath.length + 1
-	// The first line might not be equal to path, but 
-	var lastPath = fullPath
+	// // The first line might not be equal to path, but 
+	// var lastPath = fullPath
 	var root = createKeyStructure(format)
 	var scope = root
 
@@ -256,7 +258,7 @@ function traverseKeyPath(root, path, recursive, format, ensureExists = true) {
 }
 
 
-function createKeyStructure(format, recursive) {
+function createKeyStructure(format) {
 	if (format === Registry.FORMAT_SIMPLE) {
 		// '$values' (or custom defined) is an object among other subkeys.
 		// value entries are stored as name-value pairs and information about type is dropped.
