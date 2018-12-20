@@ -988,8 +988,6 @@ A possible workaround:
 
 ```js
 // Write
-await Registry.set(path, name, 4294967296, { type: 'REG_QWORD' })
-// or
 await Registry.set(path, name, 4294967296, { type: 'REG_SZ' })
 
 // Read
