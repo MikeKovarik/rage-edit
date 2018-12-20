@@ -86,7 +86,7 @@ await Registry.get('HKLM/SOFTWARE/Overwatch', '')
 // Write default value
 await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
 ```
-[See *Default values* section for more](#caveats.default-values)
+[See *"Default values"* section for more](#caveats.default-values)
 
 
 ## Case in/sensitivity
@@ -97,7 +97,7 @@ Key path and value names are case insensitive, you can interchangeably read, wri
 await Registry.get('HKCR\\.exe', 'Content Type') // returns the data
 await Registry.get('hkcr\\.exe', 'content type') // returns the data
 ```
-[See *Case sensitivity* section for more](#caveats.case-sensitivity)
+[See *"Case sensitivity"* section for more](#caveats.case-sensitivity)
 
 
 # <a name="usage"></a>Usage
@@ -163,7 +163,7 @@ await reg.set('/Blackwatch', 'Leader', 'Gabriel Reyes')
 await reg.get('/blackwatch', 'leader')
 ```
 
-[See *Constructor, instance mode* section for more](#instance)
+[See *"Constructor, instance mode"* section for more](#instance)
 
 
 # <a name="options"></a>Options
@@ -214,19 +214,15 @@ In the [.set()](#method.set) method it also can be `Object` (check [method's des
 
 ## <a name="options.type"></a>`type`: String
 
-* **Default value**: `REG_SZ` (for `.set()` method)
+* **Possible values**: `SZ`, `MULTI_SZ`, `EXPAND_SZ`, `DWORD`, `QWORD`, `BINARY`, `NONE`
+* **Default value**: `SZ` (for `.set()` method)
 
-Value type. This option is actual in the [.set() method](#method.set) only. If `type` is omitted, it is inferred from `data` as follows:
+Value type. This option is actual in the [.set() method](#method.set) only.
 
-|JS type|Registry type|
-|-|-|
-|`String`|`REG_SZ`, `REG_EXPAND_SZ`|
-|`Number`|`REG_DWORD`|
-|`BigInt`|`REG_QWORD`|
-|`Array<String>`|`REG_MULTI_SZ`|
-|`Buffer`, `Uint8Array`, `ArrayBuffer`|`REG_BINARY`|
+`REG_` perfix can be ommited, so `REG_DWORD` and `DWORD` are equal.
 
-**Note**: if `type` does not start with "REG_", it will be prepended automatically which means `REG_DWORD` and `DWORD` are equal and both are valid types.
+
+[See *"Type infering and conversions"* section for more](#caveats.type-infering)
 
 
 ## <a name="options.lowercase"></a>`lowercase`: Boolean
@@ -237,7 +233,7 @@ Value type. This option is actual in the [.set() method](#method.set) only. If `
 
 Check the [.get() method](#method.get)'s examples section for output examples.
 
-Check the [Case sensitivity](#caveats.case-sensitivity) section for more info.
+[See *"Case sensitivity"* section for more](#caveats.case-sensitivity)
 
 
 ## <a name="options.format"></a>`format`: String
@@ -931,8 +927,8 @@ But omiting `/v` (value name) argument to query all contents of the key would re
 C:\WINDOWS\system32>reg query HKCR\.jpg
 
 HKEY_CLASSES_ROOT\.jpg
-    (Default)    REG_SZ    jpegfile
-    Content Type    REG_SZ    image/jpeg
+    (Default)        REG_SZ    jpegfile
+    Content Type     REG_SZ    image/jpeg
     PerceivedType    REG_SZ    image
 ```
 
@@ -947,25 +943,104 @@ var version = key.$values['VERSION'] || key.$values['Version'] || key.$values['v
 
 ### <a name="caveats.type-infering"></a>Type infering and conversions
 
-`rage-edit` automatically picks a registry value type for you, based in the data you're storing, if you don't specify the type for yourself.
+`rage-edit` automatically picks a registry value type for you, based in the data you're storing, if you don't specify the `type` for yourself.
+
+When you write to registry with the [`type` option](#options.type) ommited, it is inferred from [`data`](#options.data). When you read from registry, data is converted automatically.
+
+|JS type|Registry type|
+|-|-|
+|`String`|`REG_SZ`, `REG_EXPAND_SZ`|
+|`Number`|`REG_DWORD`|
+|`BigInt`|`REG_QWORD`|
+|`Array<String>`|`REG_MULTI_SZ`|
+|`Buffer`, `Uint8Array`, `ArrayBuffer`|`REG_BINARY`|
 
 ```js
-Registry.setValue('HKLM\\Some\\Path', 'name', 'string', { type: 'REG_SZ' })
-Registry.setValue('HKLM\\Some\\Path', 'name', 'string')
+Registry.set(path, name, '123', { type: 'REG_DWORD' })
+Registry.set(path, name, 123)
+Registry.get(path, name) // is 123 (Number in both cases)
 
-Registry.setValue('HKLM\\Some\\Path', 'name', '123', { type: 'REG_DWORD' })
-Registry.setValue('HKLM\\Some\\Path', 'name', 123, { type: 'REG_DWORD' })
-Registry.setValue('HKLM\\Some\\Path', 'name', 123)
+Registry.set(path, name, 'one\0two\0three', { type: 'REG_MULTI_SZ' })
+Registry.set(path, name, ['one', 'two', 'three'])
 
-Registry.setValue('HKLM\\Some\\Path', 'name', 123n, { type: 'REG_QWORD' })
-Registry.setValue('HKLM\\Some\\Path', 'name', 123n)
+Registry.set(path, name', 'hello', { type: 'REG_BINARY' })
+Registry.set(path, name, Buffer.from('hello'))
+```
 
-Registry.setValue('HKLM\\Some\\Path', 'name', 'one\0two\0three', { type: 'REG_MULTI_SZ' })
-Registry.setValue('HKLM\\Some\\Path', 'name', ['one', 'two', 'three'], { type: 'REG_MULTI_SZ' })
-Registry.setValue('HKLM\\Some\\Path', 'name', ['one', 'two', 'three'])
+#### Caveats and workarounds
 
-Registry.setValue('HKLM\\Some\\Path', 'name', 'hello', { type: 'REG_BINARY' })
-Registry.setValue('HKLM\\Some\\Path', 'name', Buffer.from('hello'))
+`reg-edit` does the best on automatic type conversion between JavaScript and windows registry, so in most cases you don't have to care about it. You can safely read data from registry, though not everything is as smooth as had been wished on writing.
+
+##### `Number` and `REG_DWORD`
+
+`Number` is signed 53-bit value:  
+`-2^53 + 1 ... 2^53 - 1` or `-9,007,199,254,740,991 ... +9,007,199,254,740,991`
+
+`REG_DWORD` is unsigned 32-bit value:  
+`0 ... 2^32 - 1` or `0 ... 4,294,967,295`
+
+So you can't safely write it:
+```js
+Registry.set(path, name, -1)         // Throws an error
+Registry.set(path, name, 0)          // Ok
+Registry.set(path, name, 4294967295) // Ok
+Registry.set(path, name, 4294967296) // Throws an error
+```
+
+A possible workaround:
+
+```js
+// Write
+await Registry.set(path, name, 4294967296, { type: 'REG_QWORD'})
+// or
+await Registry.set(path, name, 4294967296, { type: 'REG_SZ'})
+
+// Read
+parseInt(await Registry.get(path, name))
+```
+
+##### `BigInt` and `REG_QWORD`
+
+`BigInt` is... big. This type represents an arbitrarily large integer whose value in theory has no upper or lower bounds. 
+
+`QWORD` is unsigned 64-bit value:  
+`0 ... 2^64 - 1` or `0 ... 18,446,744,073,709,551,615`
+
+So `BigInt` has the same problem that `Number` has:
+```js
+Registry.set(path, name, -1n)                   // Throws an error
+Registry.set(path, name, 0n)                    // Ok
+Registry.set(path, name, 18446744073709551615n) // Ok
+Registry.set(path, name, 18446744073709551616n) // Throws an error
+```
+
+A possible workaround:
+
+```js
+// Write
+await Registry.set(path, name, 18446744073709551616n, { type: 'REG_SZ'})
+
+// Read
+BigInt(await Registry.get(path, name))
+```
+
+##### `Array` and `REG_MULTI_SZ`
+
+`REG_MULTI_SZ` is string separated with null character (`\u0000`).  
+This type can't have empty strings: if you try to add one using `regedit`, it will say: "Data of type REG_MULTI_SZ cannot contain empty strings".
+
+So arrays can contain only strings and can't have empty entries.
+
+A possible workaround:
+
+```js
+var array = [1, 2, 3]
+
+// Write
+await Registry.set(path, name, JSON.stringify(array))
+
+// Read
+JSON.parse(await Registry.get(path, name))
 ```
 
 
