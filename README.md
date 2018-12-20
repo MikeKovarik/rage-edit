@@ -963,7 +963,7 @@ Registry.get(path, name) // is 123 (Number in both cases)
 Registry.set(path, name, 'one\0two\0three', { type: 'REG_MULTI_SZ' })
 Registry.set(path, name, ['one', 'two', 'three'])
 
-Registry.set(path, name', 'hello', { type: 'REG_BINARY' })
+Registry.set(path, name, 'hello', { type: 'REG_BINARY' })
 Registry.set(path, name, Buffer.from('hello'))
 ```
 
