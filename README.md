@@ -991,9 +991,9 @@ A possible workaround:
 
 ```js
 // Write
-await Registry.set(path, name, 4294967296, { type: 'REG_QWORD'})
+await Registry.set(path, name, 4294967296, { type: 'REG_QWORD' })
 // or
-await Registry.set(path, name, 4294967296, { type: 'REG_SZ'})
+await Registry.set(path, name, 4294967296, { type: 'REG_SZ' })
 
 // Read
 parseInt(await Registry.get(path, name))
@@ -1018,7 +1018,7 @@ A possible workaround:
 
 ```js
 // Write
-await Registry.set(path, name, 18446744073709551616n, { type: 'REG_SZ'})
+await Registry.set(path, name, 18446744073709551616n, { type: 'REG_SZ' })
 
 // Read
 BigInt(await Registry.get(path, name))
@@ -1034,9 +1034,9 @@ So arrays can contain only strings and can't have empty entries.
 A possible workaround:
 
 ```js
-var array = [1, 2, 3]
+var array = [1, 2,  , 4]
 
-// Write
+// Write (turns empty entries into nulls)
 await Registry.set(path, name, JSON.stringify(array))
 
 // Read
