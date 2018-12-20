@@ -469,7 +469,7 @@ If `name` is set, the specified name will be returned. In order to work with `(D
 
 `undefined` is returned if either `path` or `name` doesn't exist.
 
-Read value is automatically converted into matching JS type according with a table from [`type` section](#options.type).
+Read value is automatically converted into matching JS type according with a table from ["Type infering and conversions" section](#caveats.type-infering).
 
 
 ### Examples:
