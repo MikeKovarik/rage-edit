@@ -471,9 +471,6 @@ If `name` is set, the specified name will be returned. In order to work with `(D
 
 Read value is automatically converted into matching JS type according with a table from [`type` section](#options.type).
 
-**Note**: `REG_QWORD` values are regarded as `BigInt`s if your environment supports them (Node.js v10.4 / Chromium 67), otherwise value in hex `0x` notation is returned.  
-In other words, `REG_QWORD 0x000004d2 (1234)` value is read as `1234n` in node.js v10.4+ and as `'0x4D2'` in node.js v10.3-.
-
 
 ### Examples:
 
@@ -1023,6 +1020,8 @@ await Registry.set(path, name, 18446744073709551616n, { type: 'REG_SZ' })
 // Read
 BigInt(await Registry.get(path, name))
 ```
+
+**Note**: `REG_QWORD` values are regarded as `BigInt`s if your environment supports them (Node.js v10.4 / Chromium 67), otherwise value in hex `0x` notation is returned. In other words, `REG_QWORD 0x000004d2 (1234)` value is read as `1234n` in Node.js v10.4+ and `'0x4D2'` in Node.js v10.3-.
 
 ##### `Array` and `REG_MULTI_SZ`
 
