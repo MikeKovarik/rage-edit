@@ -337,7 +337,7 @@ Active code page: 65001
 
 That may lead to unexpected results in the future (note that the problem is actual within current console instance only). That's why unicode support can't be enabled by default.
 
-To avoid that, the `unicode` option allows to change the code page to `65001` before reading and restored it right after registry data is gotten.
+To avoid that, the `unicode` option allows to change the code page to `65001` before reading and restore it right after registry data is retrieved.
 
 ```js
 await Registry.set('HKLM/SOFTWARE/Example', 'Unicode string', 'Unicode: Коварные закорючки ツ')
