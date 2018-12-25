@@ -333,9 +333,11 @@ C:\>node yourScriptThatChangesCodepage.js
 
 C:\>chcp
 Active code page: 65001
+
+# Note: `chcp` still says `437` in other console instances
 ```
 
-That may lead to unexpected results in the future (note that the problem is actual within current console instance only). That's why unicode support can't be enabled by default.
+That may lead to unexpected results in the future (the problem is actual within current console instance only). That's why unicode support can't be enabled by default.
 
 To avoid that, the `unicode` option allows to change the code page to `65001` before reading and restore it right after registry data is retrieved.
 
