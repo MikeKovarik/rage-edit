@@ -249,7 +249,7 @@ export function getOptions(args = [], includeDefaults = true) {
 	var defaultOptions = { lowercase, format, bits, path, name, data }
 
 	// Merge default options with user options
-	var options = Object.assign({}, defaultOptions, userOptions)
+	var options = {...defaultOptions, ...userOptions}
 
 	// Allow both forward slashes and backslashes
 	if (options.path)

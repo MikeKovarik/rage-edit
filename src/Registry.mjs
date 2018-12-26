@@ -30,7 +30,7 @@ export class Registry {
 
 	_formatArgs(args) {
 		debug('[Registry._formatArgs] -->', args)
-		var options = Object.assign({}, this.options, {[Registry.IS_OPTIONS]: true})
+		var options = {...this.options, [Registry.IS_OPTIONS]: true}
 		if (args.length === 0) {
 			options.path = this.path
 			debug('[Registry._formatArgs] <--', options)
@@ -53,7 +53,7 @@ export class Registry {
 
 		// 'false' is for not including default values (such as 'lowercase') from 'Registry'
 		var userOptions = getOptions(args, false)
-		options = Object.assign({}, options, userOptions)
+		options = {...options, ...userOptions}
 
 		debug('[Registry._formatArgs] <--', options)
 		return options
