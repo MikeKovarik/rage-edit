@@ -72,11 +72,11 @@ function promiseOnce(eventEmitter, event) {
 
 // Promise wrapper for child_process.spawn().
 export var spawn = async (program, args) => {
-	var stdio = ['ignore', 'pipe', 'pipe']
-	var proc = cp.spawn(program, args, {stdio})
+	var proc = cp.spawn(program, args)
 
 	var stdout = ''
 	var stderr = ''
+	proc.stdin.end()
 	proc.stdout.on('data', data => stdout += data.toString())
 	proc.stderr.on('data', data => stderr += data.toString())
 
