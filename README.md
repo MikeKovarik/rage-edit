@@ -378,7 +378,9 @@ Check the description of the [.get() method](#method.get) for examples.
 
 **Note**: Please try to aviod cases where this option could be used.
 
-Allows to explicitly mark object as options object. Is used internally but can also be useful in some edge cases described in the [.set() method](#method.set)'s description.
+Every method accepts an options object which is always the last object argument. The [.set() method](#method.set) is an exception because it expects a complex data object by default. This option allows to explicitly mark object as options object. Is used internally but can also be useful in some edge cases.
+
+Check the [Methods'](#methods) introduction to see how it works or the [.set() method](#method.set)'s description for examples.
 
 
 
