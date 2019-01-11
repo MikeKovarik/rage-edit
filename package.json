@@ -1,6 +1,6 @@
 {
   "name": "rage-edit",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "🗃 Simple access to, and manipulation of, the Windows Registry. With promises. Without rage.",
   "keywords": [
     "windows",
@@ -19,8 +19,8 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "test": "mocha test",
-    "test-bail": "mocha test --bail"
+    "test": "mocha test/test",
+    "test-bail": "mocha test/test --bail"
   },
   "devDependencies": {
     "chai": "^4.1.2",

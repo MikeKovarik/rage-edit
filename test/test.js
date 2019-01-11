@@ -1,4 +1,4 @@
-const {Registry, isAdmin} = require('./index.js')
+const {Registry, isAdmin} = require('../index.js')
 const {assert} = require('chai')
 
 
