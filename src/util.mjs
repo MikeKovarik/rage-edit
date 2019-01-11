@@ -8,6 +8,7 @@ let ERR_NOT_FOUND
 export let VALUE_DEFAULT = undefined
 export let VALUE_NOT_SET = undefined
 
+// Ensure we get localized messages only once.
 let errMessagePromise
 let defaultValuesPromise
 
@@ -32,34 +33,33 @@ function setDefaultValues(stdout) {
 // Method for calling the reg.exe commands.
 export var execute
 
-// Temporary wrapper over execute() function that first gets localized values
-// because reg.exe is locale based. Only runs on the first (few) calls.
+// Temporary wrapper over execute() function that:
+//   1) gets localized values because reg.exe is locale based.
+//   2) Only runs on the first (few) calls.
 execute = async args => {
-	// Ensure we get localized messages only once.
+	// Postpone all execute() calls until the localized messages are resolved. 
+	await getLocalizedErrorMessages()
+	// Replace this temporary function with actual execute().
+	execute = _execute
+	return _execute(args)
+}
 
+function getLocalizedErrorMessages() {
 	// ERR_NOT_FOUND message.
 	if (!errMessagePromise) {
 		errMessagePromise = spawn('reg.exe', ['QUERY', 'HKLM\\NONEXISTENT'])
 			.then(res => ERR_NOT_FOUND = getErrorLine(res.stderr))
 	}
-
 	// (Default) and (value not set) values.
 	if (!defaultValuesPromise) {
 		defaultValuesPromise = spawn('reg.exe', ['QUERY', 'HKCR', '/ve'])
 			.then(res => setDefaultValues(res.stdout))
 	}
-
-	// Postpone all execute() calls until the localized messages are resolved. 
 	await Promise.all([errMessagePromise, defaultValuesPromise])
-
-	// Replace this temporary function with actual execute().
-	execute = _execute
-
-	return _execute(args)
 }
 
 // Actual execute() function.
-var _execute = async args => {
+async function _execute(args) {
 	debug('[util.execute]', args)
 	var {stdout, stderr} = await spawn('reg.exe', args)
 	// REG command has finished running, resolve result or throw error if any occured.
@@ -81,6 +81,8 @@ export var spawn = async (program, args) => {
 
 	var stdout = ''
 	var stderr = ''
+
+	// NOTE: we're not 'ignore'ing stdin anymore because of Electron's bug.
 	proc.stdin.end()
 	proc.stdout.on('data', data => stdout += data.toString())
 	proc.stderr.on('data', data => stderr += data.toString())
@@ -215,28 +217,26 @@ export function debug(...args) {
 
 // Converts 'options.bits' into valid 'reg.exe' argument
 function bitsToArg(bits) {
-	if (!bits)
-		return undefined
 	switch (bits) {
 		case 64: return ARG_64BIT
 		case 32: return ARG_32BIT
+		default: return undefined
 	}
-	return undefined
 }
 
 // Accepts ([path[, name[, data[, type]]]][, options]) and turns them into a single object
 export function getOptions(args = [], includeDefaults = true) {
 	debug('[util.getOptions] -->', args, {includeDefaults})
 	// Parse arguments
-	var userOptions = {}
 	if (args.length === 1 && isObject(args[0])) {
-		userOptions = args.pop()
-
+		var userOptions = args.pop()
 		// Explicitly mark first object as an options object
 		userOptions[Registry.IS_OPTIONS] = true
+	} else if (isObject(args[args.length - 1])) {
+		var userOptions = args.pop()
+	} else {
+		var userOptions = {}
 	}
-	else if (isObject(args[args.length - 1]))
-		userOptions = args.pop()
 
 	// Destructure arguments
 	var [path, name, data] = args
