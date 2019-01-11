@@ -242,11 +242,11 @@ export function getOptions(args = [], includeDefaults = true) {
 	var [path, name, data] = args
 
 	// Get default values if needed
-	var { lowercase, format, bits } = includeDefaults ? Registry : {}
+	var {lowercase, format, bits} = includeDefaults ? Registry : {}
 
 	// Path, name, and data passed as args can be overridden
 	//   with the same named options passed in options obejct.
-	var defaultOptions = { lowercase, format, bits, path, name, data }
+	var defaultOptions = {lowercase, format, bits, path, name, data}
 
 	// Merge default options with user options
 	var options = {...defaultOptions, ...userOptions}

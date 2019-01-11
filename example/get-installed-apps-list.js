@@ -33,8 +33,8 @@ async function main() {
   // Note: use the 'enableUnicode()' function for multiple calls and a 'unicode: true' option for a single call. Check readme for details.
   try {
     await Registry.enableUnicode()
-    apps[64] = await Registry.get(path, { recursive: true, bits: 64 })
-    apps[32] = await Registry.get(path, { recursive: true, bits: 32 })
+    apps[64] = await Registry.get(path, {recursive: true, bits: 64})
+    apps[32] = await Registry.get(path, {recursive: true, bits: 32})
   } finally {
     // Disabe unicode even if a wild error appeared
     await Registry.disableUnicode()

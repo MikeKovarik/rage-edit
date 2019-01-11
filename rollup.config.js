@@ -13,6 +13,7 @@ export default {
 		file: `index.js`,
 		format: 'umd',
 		name: pkg.name,
+		exports: 'named',
 		amd: {id: pkg.name},
 		globals,
 	},

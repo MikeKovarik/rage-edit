@@ -1,6 +1,6 @@
 import {HIVES, shortenHive, extendHive} from './constants.mjs'
 import {sanitizePath, spawn, getOptions} from './util.mjs'
-import { debug } from './util.mjs';
+import {debug} from './util.mjs'
 
 
 // Collection of static methods for interacting with any key in windows registry.

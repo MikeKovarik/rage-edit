@@ -9,14 +9,14 @@
   // Before:
   Registry.get(path, true)
   // After:
-  Registry.get(path, { recursive: true })
+  Registry.get(path, {recursive: true})
   ```
 - `type` argument of `.set()` is moved inside of `options`:
   ```js
   // Before:
   Registry.get(path, name, data, 'REG_SZ')
   // After:
-  Registry.get(path, name, data, { type: 'REG_SZ' })
+  Registry.get(path, name, data, {type: 'REG_SZ'})
   ```
 - Now `.set(path)` creates empty key with `undefined` default value instead of empty string (#11):
   ```js
