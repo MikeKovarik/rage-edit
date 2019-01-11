@@ -55,7 +55,7 @@ function getLocalizedErrorMessages() {
 		defaultValuesPromise = spawn('reg.exe', ['QUERY', 'HKCR', '/ve'])
 			.then(res => setDefaultValues(res.stdout))
 	}
-	await Promise.all([errMessagePromise, defaultValuesPromise])
+	return Promise.all([errMessagePromise, defaultValuesPromise])
 }
 
 // Actual execute() function.
@@ -264,4 +264,16 @@ export function getOptions(args = [], includeDefaults = true) {
 
 	debug('[util.getOptions] <--', options)
 	return options
+}
+
+
+
+let isAdminValue
+let isAdminPromise
+export async function isAdmin() {
+	if (isAdminValue !== undefined)
+		return isAdminValue
+	isAdminPromise = spawn('net', ['session'])
+	let stderr = (await isAdminPromise).stderr.toLowerCase()
+	return isAdminValue = !stderr.includes('access is denied')
 }

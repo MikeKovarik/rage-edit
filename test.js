@@ -1,4 +1,4 @@
-const {Registry} = require('./index.js')
+const {Registry, isAdmin} = require('./index.js')
 const {assert} = require('chai')
 
 
@@ -75,6 +75,10 @@ var setValue    = (...args) => Registry.setValue(getOpts(...args))
 
 describe('[service] Prepare registry for tests', () => {
 
+	it('test run with admin privileges', async () => {
+		assert.isTrue(await isAdmin(), 'TEST SUITE HAS TO RUN UNDER ADMIN PRIVILEGE!!!')
+	})
+
 	it('import .reg file', async () => {
 		await spawn('reg.exe', ['import', `${__dirname}\\test.reg`])
 	})
@@ -89,7 +93,7 @@ describe('[service] Prepare registry for tests', () => {
 
 
 describe('Registry static', () => {
-	
+
 	describe('Internal', () => {
 
 		describe('.getOptions', () => {

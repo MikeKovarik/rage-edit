@@ -107,11 +107,11 @@ Only the `Registry` class is exported (both named and default export)
 
 ```js
 // ES Modules way
-import { Registry } from 'rage-edit'
+import {Registry} from 'rage-edit'
 import Registry from 'rage-edit'
 
 // CJS way
-var { Registry } = require('rage-edit')
+var {Registry} = require('rage-edit')
 ```
 
 It is modelled after ES6 `Map` class with methods `.get()`, `.set()`, `.has()`, and `.delete()`. Those can be used in two modes - static and instance.
@@ -271,7 +271,7 @@ The following snippet serves as an example of how output can be nested, but the 
 
 ```js
 // Gets default value (empty string) of HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\FeedManager
-var software = await Registry.get('HKLM/Software', { recursive: true })
+var software = await Registry.get('HKLM/Software', {recursive: true})
 software.microsoft.windows.currentversion['Lock Screen'].feedmanager.$values['']
 ```
 
@@ -284,7 +284,7 @@ Nesting with this format is much more verbose.
 
 ```js
 // Gets default value (empty string) of HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\FeedManager
-var software = await Registry.get('HKLM/Software', { recursive: true, format: 'complex' })
+var software = await Registry.get('HKLM/Software', {recursive: true, format: 'complex'})
 software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].keys.feedmanager.values['']
 ```
 
@@ -348,7 +348,7 @@ await Registry.set('HKLM/SOFTWARE/Example', 'Unicode string', 'Unicode: Кова
 -> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string')
 <- 'Unicode: ???????? ????????? ?'
 
--> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string', { unicode: true })
+-> await Registry.get('HKLM/SOFTWARE/Example', 'Unicode string', {unicode: true})
 <- 'Unicode: Коварные закорючки ツ'
 ```
 
@@ -404,7 +404,7 @@ await Registry.get({
 })
 ```
 ```js
-await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', 'content', { type: 'REG_SZ' })
+await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', 'content', {type: 'REG_SZ'})
 
 // Equals to:
 await Registry.set({
@@ -435,8 +435,8 @@ await Registry.set('HKLM/SOFTWARE/Example', 'StringVal', {
 
 // A better alternative for two last examples:
 await Registry.set('HKLM/SOFTWARE/Example',
-  { StringVal: 'content' }, // Data object
-  { type: 'REG_SZ' }        // Options object
+  {StringVal: 'content'}, // Data object
+  {type: 'REG_SZ'}        // Options object
 )
 ```
 
@@ -493,7 +493,7 @@ Read value is automatically converted into matching JS type according with a tab
     }
   }
 
--> await Registry.get('HKLM/SOFTWARE/Example', { lowercase: false })
+-> await Registry.get('HKLM/SOFTWARE/Example', {lowercase: false})
 <- {
     '$values': {
       StringVal: 'content',
@@ -504,7 +504,7 @@ Read value is automatically converted into matching JS type according with a tab
     }
   }
 
--> await Registry.get('HKLM/SOFTWARE/Example', { recursive: true })
+-> await Registry.get('HKLM/SOFTWARE/Example', {recursive: true})
 <- {
     '$values': {
       stringval: 'content',
@@ -518,7 +518,7 @@ Read value is automatically converted into matching JS type according with a tab
     }
   }
 
--> await Registry.get('HKLM/SOFTWARE/Example', { format: 'complex' })
+-> await Registry.get('HKLM/SOFTWARE/Example', {format: 'complex'})
 <- {
     keys: {
       subkey: {
@@ -576,7 +576,7 @@ Just like `.get()` but returns boolean depending on existence of the key or valu
 <- false
 
 // Checks 'HKLM\SOFTWARE\Wow6432Node\Example
--> await Registry.has('HKLM/SOFTWARE/Example', { bits: 32 })
+-> await Registry.has('HKLM/SOFTWARE/Example', {bits: 32})
 <- false
 ```
 
@@ -616,7 +616,7 @@ await Registry.set({
 await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'NumberVal', 47)
 
 // Explicitly store integer as a string
-await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'NumberVal', 47, { type: 'REG_SZ' })
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example', 'NumberVal', 47, {type: 'REG_SZ'})
 
 // Create default value entry
 await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/Example/Subkey', '', 'Some default value')
@@ -647,7 +647,7 @@ await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE', 'Example', {
 ```js
 // Edge case: create empty key under the 32-bit registry environment.
 // A possible solution is set '$isOptions` option.
-await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/New key', { bits: 32, $isOptions: true})
+await Registry.set('HKEY_LOCAL_MACHINE/SOFTWARE/New key', {bits: 32, $isOptions: true})
 
 // But there's the better way to do the same:
 await Registry.set({
@@ -670,7 +670,7 @@ Doesn't return anything.
 
 ```js
 // Delete value 'NumberVal' in 'HKLM\SOFTWARE\Wow6432Node\Example'
-await Registry.delete('HKLM/SOFTWARE/Example', 'NumberVal', { bits: 32 })
+await Registry.delete('HKLM/SOFTWARE/Example', 'NumberVal', {bits: 32})
 
 // Delete value 'NumberVal' in 'HKLM\SOFTWARE\Example'
 await Registry.delete('HKLM/SOFTWARE/Example', 'NumberVal')
@@ -756,7 +756,7 @@ reg.get('/Subkey', '')
 ```
 ```js
 // Change options only
-let regStrict = new Registry({ format: 'complex', lowercase: false, recursive: true })
+let regStrict = new Registry({format: 'complex', lowercase: false, recursive: true})
 
 -> await regStrict.get('HKLM/SOFTWARE/Example')
 <- {
@@ -780,14 +780,14 @@ let regStrict = new Registry({ format: 'complex', lowercase: false, recursive: t
 ```
 ```js
 // Both path and options
-let ureg = new Registry('HKLM/SOFTWARE/Example', { unicode: true })
+let ureg = new Registry('HKLM/SOFTWARE/Example', {unicode: true})
 
 ureg.get('/Subkey', 'Some unicode value')
 // Same as:
-Registry.get('HKLM/SOFTWARE/Example/Subkey', 'Some unicode value', { unicode: true })
+Registry.get('HKLM/SOFTWARE/Example/Subkey', 'Some unicode value', {unicode: true})
 
 // Options still can be overridden
-ureg.get('/Subkey', 'Some normal value', { unicode: false })
+ureg.get('/Subkey', 'Some normal value', {unicode: false})
 ```
 
 
@@ -848,7 +848,7 @@ await Registry.set('HKLM/SOFTWARE/Overwatch')
 await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...')
 
 // Creates or updates default value of type REG_EXPAND_SZ, inside key HKLM\SOFTWARE\Overwatch (also creates the key if it doesn't exists)
-await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...', { type: 'REG_EXPAND_SZ' })
+await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventurers, oddities...', {type: 'REG_EXPAND_SZ'})
 ```
 
 
@@ -857,9 +857,9 @@ await Registry.set('HKLM/SOFTWARE/Overwatch', '', 'Soldiers, scientists, adventu
 Write and delete operation outside `HKCU` hive (Current user) as well as reading certain hives require the app to run with administrator privileges.
 
 ```js
+await Registry.set('HKCU\\SOFTWARE\\Overwatch')
+console.log('Written to HKCU without admin priviledges.')
 try {
-  await Registry.set('HKCU\\SOFTWARE\\Overwatch')
-  console.log('Written to HKCU without admin priviledges.')
   await Registry.set('HKLM\\SOFTWARE\\Overwatch')
   console.log('Written to HKLM with admin priviledges.')
 } catch(err) {
@@ -902,7 +902,7 @@ The lowercasing can be turned off
 Registry.lowercase = false
 
 // Or per request
-var key = await Registry.get('HKCR\\.exe', { lowercase: false })
+var key = await Registry.get('HKCR\\.exe', {lowercase: false})
 key.$values['Content Type']
 ```
 
@@ -969,14 +969,14 @@ When you read from the registry, data is converted to matching JS type automatic
 |`Buffer`, `Uint8Array`, `ArrayBuffer`|`REG_BINARY`|
 
 ```js
-Registry.set(path, name, '123', { type: 'REG_DWORD' })
+Registry.set(path, name, '123', {type: 'REG_DWORD'})
 Registry.set(path, name, 123)
 Registry.get(path, name) // is 123 (Number in both cases)
 
-Registry.set(path, name, 'one\0two\0three', { type: 'REG_MULTI_SZ' })
+Registry.set(path, name, 'one\0two\0three', {type: 'REG_MULTI_SZ'})
 Registry.set(path, name, ['one', 'two', 'three'])
 
-Registry.set(path, name, 'hello', { type: 'REG_BINARY' })
+Registry.set(path, name, 'hello', {type: 'REG_BINARY'})
 Registry.set(path, name, Buffer.from('hello'))
 ```
 
@@ -1004,7 +1004,7 @@ A possible workaround:
 
 ```js
 // Write
-await Registry.set(path, name, 4294967296, { type: 'REG_SZ' })
+await Registry.set(path, name, 4294967296, {type: 'REG_SZ'})
 
 // Read
 parseInt(await Registry.get(path, name))
@@ -1029,7 +1029,7 @@ A possible workaround:
 
 ```js
 // Write
-await Registry.set(path, name, 18446744073709551616n, { type: 'REG_SZ' })
+await Registry.set(path, name, 18446744073709551616n, {type: 'REG_SZ'})
 
 // Read
 BigInt(await Registry.get(path, name))
