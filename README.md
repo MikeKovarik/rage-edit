@@ -47,13 +47,14 @@ npm install rage-edit
   * [IS_OPTIONS](#static.isOptions) -->
 * [Constructor, instance mode](#instance)
   * [new Registry()](#instance.constructor)
+  * [Instance methods](#instance.methods)
   * [Instance properties](#instance.properties)
   * [Examples](#instance.examples)
 * [Caveats, edge cases & the weirdness of Windows registry](#caveats)
   * [Friendly reminder about HKCR, HKLM, 64-bit and Wow6432Nodes](#caveats.reminder)
   * [Default values](#caveats.default-values)
   * [Restricted access, administrator permissions](#caveats.permissions)
-  * [Error suppresion](#caveats.error-suppresion)
+  * [Error suppression](#caveats.error-suppression)
   * [Case sensitivity](#caveats.case-sensitivity)
   * [Type inferring and conversions](#caveats.type-inferring)
 * [Join the discussion](#discussion)
@@ -867,7 +868,7 @@ try {
 ```
 
 
-### <a name="caveats.error-suppresion"></a>Error suppression
+### <a name="caveats.error-suppression"></a>Error suppression
 
 `rage-edit` deliberately suppresses error `The system was unable to find the specified registry key or value` that is thrown by the `reg` command when a non-existent value or key is queried. Instead, the promise is resolved with `undefined`.
 
