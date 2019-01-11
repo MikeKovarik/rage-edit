@@ -299,10 +299,10 @@ software.keys.microsoft.keys.windows.keys.currentversion.keys['Lock Screen'].key
 
 |Condition|Requested key|Redirected to|
 |-|-|-|
-|64-bit node.js **OR** `{ bits: 64 }`|HKLM/SOFTWARE/Example|HKLM/SOFTWARE/Example|
-|64-bit node.js **OR** `{ bits: 64 }`|HKLM/SOFTWARE/Wow6432Node/Example|HKLM/SOFTWARE/Wow6432Node/Example|
-|32-bit node.js **OR** `{ bits: 32 }`|HKLM/SOFTWARE/Example|HKLM/SOFTWARE/Wow6432Node/Example|
-|32-bit node.js **OR** `{ bits: 32 }`|HKLM/SOFTWARE/Wow6432Node/Example|HKLM/SOFTWARE/Wow6432Node/Example|
+|64-bit node.js<br>**OR** `{bits: 64}`|HKLM/SOFTWARE/Example|HKLM/SOFTWARE/Example|
+|64-bit node.js<br>**OR** `{bits: 64}`|HKLM/SOFTWARE/Wow6432Node/Example|HKLM/SOFTWARE/Wow6432Node/Example|
+|32-bit node.js<br>**OR** `{bits: 32}`|HKLM/SOFTWARE/Example|HKLM/SOFTWARE/Wow6432Node/Example|
+|32-bit node.js<br>**OR** `{bits: 32}`|HKLM/SOFTWARE/Wow6432Node/Example|HKLM/SOFTWARE/Wow6432Node/Example|
 
 The format also can be changed globally:
 ```js
