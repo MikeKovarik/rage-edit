@@ -55,7 +55,7 @@ npm install rage-edit
   * [Restricted access, administrator permissions](#caveats.permissions)
   * [Error suppresion](#caveats.error-suppresion)
   * [Case sensitivity](#caveats.case-sensitivity)
-  * [Type infering and conversions](#caveats.type-infering)
+  * [Type inferring and conversions](#caveats.type-inferring)
 * [Join the discussion](#discussion)
 * [Credits](#credits)
 
@@ -66,11 +66,11 @@ npm install rage-edit
 
 Please be advised that the `key` and `value` terminology from the Windows registry might be confusing because it's different than the naming widely used in the world of JS. Windows registry is much like file system with folders and files, or XML, rather than JSON.
 
-In JSON, `key` usually stands for name of the property that stores a `value`.
+In JSON, `key` usually stands for a name of the property that stores a `value`.
 
-In the Windows registry, `key` is like a folder (or the path to it) that can contain multiple `value`s, which are kind of like files. `value` has a name and the data content it stores (and type of the data).
+In the Windows registry, a `key` is like a folder (or the path to it) that can contain multiple `value`s, which are kind of like files. `value` has a name and the data content it stores (and type of the data).
 
-So when refering to `value`, its name is often meant rather than the data it holds.
+So when referring to `value`, its name is often meant rather than the data it holds.
 
 To lessen the confusion, we're often using terms like value entry, value name, name of the value entry, etc... and path stands for the path of the key.
 
@@ -180,7 +180,7 @@ Path is the only value that is required in every method. If method's first argum
 
 * Both backslashes (`\`) and forward slashes (`/`) can be used. Note that backslashes should be always escaped (`\\`).
 * Path is case insensitive.
-* Path should be started with either long or short hive name:
+* Path should be started with either a long or short hive name:
 
   |Long name|Short name|
   |-|-|
@@ -219,10 +219,10 @@ In the [.set()](#method.set) method it also can be `Object` (check [method's des
 
 Value type. This option is actual in the [.set() method](#method.set) only.
 
-`REG_` perfix can be ommited, so `REG_DWORD` and `DWORD` are equal.
+`REG_` prefix can be omitted, so `REG_DWORD` and `DWORD` are equal.
 
 
-[See *"Type infering and conversions"* section for more](#caveats.type-infering)
+[See *"Type inferring and conversions"* section for more](#caveats.type-inferring)
 
 
 ## <a name="options.lowercase"></a>`lowercase`: Boolean
@@ -323,7 +323,7 @@ Registry.bits = null
 
 Node.js does always expect UTF-8 output from a child process, but Windows relies on the default system's [code page](https://ss64.com/nt/chcp.html) (with English locale it is `cp437`, with Russian locale it is `cp866` and so on) which results to rendering non-ASCII characters as `?` or `�`.
 
-A possible workaround is change the console codepage to `65001`. But due to how Windows console works, changed codepage stays changed even after JS code finished its work:
+A possible workaround is to change the console codepage to `65001`. But due to how Windows console works, changed codepage stays changed even after JS code finished its work:
 
 ```
 C:\>chcp
@@ -337,7 +337,7 @@ Active code page: 65001
 # Note: `chcp` still says `437` in other console instances
 ```
 
-That may lead to unexpected results in the future (the problem is actual within current console instance only). That's why unicode support can't be enabled by default.
+That may lead to unexpected results in the future (the problem is actually within current console instance only). That's why unicode support can't be enabled by default.
 
 To avoid that, the `unicode` option allows to change the code page to `65001` before reading and restore it right after registry data is retrieved.
 
@@ -362,7 +362,7 @@ try {
 }
 ```
 
-**Note**: this problem is actual for reading from registry only. Writing unicode data works with any codepage.
+**Note**: this problem is actual for reading from the registry only. Writing unicode data works with any codepage.
 
 
 ## <a name="options.recursive"></a>`recursive`: Boolean
@@ -376,9 +376,9 @@ Check the description of the [.get() method](#method.get) for examples.
 
 ## <a name="options.isOptions"></a>`$isOptions`: Boolean
 
-**Note**: Please try to aviod cases where this option could be used.
+**Note**: Please try to avoid cases where this option could be used.
 
-Every method accepts an options object which is always the last object argument. The [.set() method](#method.set) is an exception because it expects a complex data object by default. This option allows to explicitly mark object as options object. Is used internally but can also be useful in some edge cases.
+Every method accepts an options object which is always the last object argument. The [.set() method](#method.set) is an exception because it expects a complex data object by default. This option allows to explicitly mark the object as the options object. Is used internally but can also be useful in some edge cases.
 
 Check the [Methods'](#methods) introduction to see how it works or the [.set() method](#method.set)'s description for examples.
 
@@ -386,7 +386,7 @@ Check the [Methods'](#methods) introduction to see how it works or the [.set() m
 
 # <a name="methods"></a>Methods
 
-Every method accepts up to four optional arguments in the following order: `path`, `name`, `data`, `options`. If last argument is object, it's always regarded as options object (`.set()` is an exception, see [$isOptions section](#options.isOptions) above). At least one argument is required. If some of arguments is omitted, it can be specified in options object which means all the following examples do the same thing:
+Every method accepts up to four optional arguments in the following order: `path`, `name`, `data`, `options`. If last argument is object, it's always regarded as options object (`.set()` is an exception, see [$isOptions section](#options.isOptions) above). At least one argument is required. If some of the arguments are omitted, it can be specified in options object which means all the following examples do the same thing:
 
 ```js
 await Registry.get('HKLM/SOFTWARE/Example', 'String')
@@ -473,13 +473,13 @@ If `name` is set, the specified name will be returned. In order to work with `(D
 
 `undefined` is returned if either `path` or `name` doesn't exist.
 
-Read value is automatically converted into matching JS type according with a table from ["Type infering and conversions" section](#caveats.type-infering).
+Read value is automatically converted into matching JS type according with a table from ["Type inferring and conversions" section](#caveats.type-inferring).
 
 
 ### Examples:
 
 ```js
-// Getting key structre
+// Getting key structure
 
 -> await Registry.get('HKLM/SOFTWARE/Example')
 <- {
@@ -593,7 +593,7 @@ Creates or rewrites a `key` or `name`d value inside a key at the given `path`.
 
 If a key at the path doesn't exist it will be created.
 
-If `type` option is ommited, value type is automatically inferred as described in the [type section](#options.type).
+If `type` option is omitted, value type is automatically inferred as described in the [type section](#options.type).
 
 Doesn't return anything.
 
@@ -699,19 +699,16 @@ await Registry.delete('HKLM/SOFTWARE/Example')
 
 # <a name="instance"></a>Constructor, instance mode
 
-It's possible to create a new `Registry` instance with some defaults overridden with your own.
-
-In the instance mode every method described in the [methods section](#methods) works just like it's expected to work. The only option that behaves different is `path`. See section below for details.
-
-
 ## <a name="instance.constructor"></a>`new Registry([path,][options])`
+
+If you only need to modify values in a single key, you might want to create `Registry` instance with said key path and omit the `path` argument from methods `get()`, `set()`, etc...
 
 
 ### `path`
 
 [Path](#options.path) represents a root path to a key. Can be set through a first argument, or as a `path` option.
 
-If `path` is ommited, every method described in the [methods section](#methods) works just like it's expected to work.
+If `path` is omitted, every method described in the [methods section](#methods) works just like it's expected to work.
 
 If `path` is set, this option becomes optional in every method. Though if first argument is a string and starts with a slash, it's regarded as a relative path.
 
@@ -720,6 +717,18 @@ If `path` is set, this option becomes optional in every method. Though if first 
 
 Object that can contain every option described in the [options section](#options)
 
+
+## <a name="instance.methods"></a>Instance methods
+
+All the methods described in the [methods section](#methods) work in instance mode as expected with a single difference - `path` argument becomes optional.
+
+```js
+var reg = new Registry('HKLM/Software/Overwatch')
+// Gets value of 'Scientists' from key 'HKLM\Software\Overwatch'
+await reg.get('Scientists')
+// Optional path arguments changes scope to 'HKLM\Software\Overwatch\Blackwatch'
+await reg.get('/blackwatch', 'leader')
+```
 
 ## <a name="instance.properties"></a>Instance properties
 
@@ -853,14 +862,14 @@ try {
   await Registry.set('HKLM\\SOFTWARE\\Overwatch')
   console.log('Written to HKLM with admin priviledges.')
 } catch(err) {
-  console.log(`Couldn't write to HKLM without admin priviledges.`)
+  console.log(`Couldn't write to HKLM without admin privileges.`)
 }
 ```
 
 
-### <a name="caveats.error-suppresion"></a>Error suppresion
+### <a name="caveats.error-suppresion"></a>Error suppression
 
-`rage-edit` deliberately suppresses error `The system was unable to find the specified registry key or value` that is thrown by the `reg` command when a non-existent value or key is queried. Instead the promise is resolve with `undefined`.
+`rage-edit` deliberately suppresses error `The system was unable to find the specified registry key or value` that is thrown by the `reg` command when a non-existent value or key is queried. Instead, the promise is resolved with `undefined`.
 
 All other errors (especially `Access is denied`) are thrown as expected and the promise will be rejected.
 
@@ -922,7 +931,7 @@ HKEY_CLASSES_ROOT\.jpg
     perceivedtype    REG_SZ    image
 ```
 
-But omiting `/v` (value name) argument to query all contents of the key would return value entries with their true names (in this case `PerceivedType`).
+But omitting `/v` (value name) argument to query all contents of the key would return value entries with their true names (in this case `PerceivedType`).
 
 ```
 C:\WINDOWS\system32>reg query HKCR\.jpg
@@ -933,7 +942,7 @@ HKEY_CLASSES_ROOT\.jpg
     PerceivedType    REG_SZ    image
 ```
 
-This however could cause performance issues (querying whole key when only single value is needed isn't a good idea) and the insensitive nature of Windows Registry lead `rage-edit` to deliberately lowercase all paths and value names to prevent situations like this:
+This, however, could cause performance issues (querying the whole key when only a single value is needed isn't a good idea) and the insensitive nature of Windows Registry lead `rage-edit` to deliberately lowercase all paths and value names to prevent situations like this:
 
 ```js
 // rage-edit by default transforms all value names to lower case to prevent having to do this:
@@ -942,11 +951,13 @@ var version = key.$values['VERSION'] || key.$values['Version'] || key.$values['v
 ```
 
 
-### <a name="caveats.type-infering"></a>Type infering and conversions
+### <a name="caveats.type-inferring"></a>Type inferring and conversions
 
 `rage-edit` automatically picks a registry value type for you, based in the data you're storing, if you don't specify the `type` for yourself.
 
-When you write to registry with the [`type` option](#options.type) ommited, it is inferred from [`data`](#options.data). When you read from registry, data is converted automatically.
+When you write to the registry without the [`type` option](#options.type), it is inferred from [`data`](#options.data).
+
+When you read from the registry, data is converted to matching JS type automatically.
 
 |JS type|Registry type|
 |-|-|
@@ -970,7 +981,7 @@ Registry.set(path, name, Buffer.from('hello'))
 
 #### Caveats and workarounds
 
-`reg-edit` does the best on automatic type conversion between JavaScript and windows registry, so in most cases you don't have to care about it. You can safely read data from registry, though not everything is as smooth as had been wished on writing.
+`reg-edit` does the best on automatic type conversion between JavaScript and windows registry, so in most cases, you don't have to care about it. You can safely read data from the registry, though not everything is as smooth as had been wished on writing.
 
 ##### `Number` and `REG_DWORD`
 
@@ -1000,7 +1011,7 @@ parseInt(await Registry.get(path, name))
 
 ##### `BigInt` and `REG_QWORD`
 
-`BigInt` is... big. This type represents an arbitrarily large integer whose value in theory has no upper or lower bounds. 
+`BigInt` is... big. This type represents an arbitrarily large integer whose value, in theory, has no upper or lower bounds. 
 
 `QWORD` is unsigned 64-bit value:  
 `0 ... 2^64 - 1` or `0 ... 18,446,744,073,709,551,615`
