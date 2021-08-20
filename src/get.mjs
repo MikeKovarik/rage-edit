@@ -92,9 +92,9 @@ Registry.getValue = async function(path, name = Registry.DEFAULT, options) {
 	options = getOptions(options)
 	// Create query for retrieving only single value entry. Either the default one (empty string) or concrete named.
 	if (name === Registry.DEFAULT)
-		var result = await execute(['query', path, '/ve'])
+		var result = await execute(['query', path, options.searchKey === undefined ? '/ve' : options.searchKey])
 	else
-		var result = await execute(['query', path, '/v', name])
+		var result = await execute(['query', path, options.searchKey === undefined ? '/v' : options.searchKey, name])
 	// Short circuit further processing if the key at given path was not found and undefined was returned.
 	if (result === undefined) return
 
